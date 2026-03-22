@@ -18,7 +18,7 @@
 | 4.3 | Token Inspector Panel | Done | f2e3e75 |
 | 4.4 | API Tester Panel | Done | 6877707 |
 | 4.5 | Token Refresh Demo Panel | Done | e371ed5 |
-| 4.6 | Proactive Silent Refresh Timer | | |
+| 4.6 | Proactive Silent Refresh Timer | Done | TBD |
 
 ---
 
@@ -36,6 +36,8 @@
 | 4.4 | Network error (fetch throws) rendered as status 0 + error message | CORS failures and connection-refused errors throw before a response exists. Status 0 with gray border distinguishes them from HTTP 4xx/5xx. |
 | 4.5 | getAccessToken() used after renew() instead of extracting from Token object | renew() returns a Token object whose shape varies across SDK versions. getAccessToken() is the stable public API for retrieving the string. |
 | 4.5 | /token-refresh route added to App.jsx inside SecureRoute | Component requires authenticated context and token in TokenContext. Route is the Dashboard link target from Task 4.2. |
+| 4.6 | Timer rescheduling via useEffect dependency on accessToken, not manual call | setAccessToken(newToken) causes accessToken to change → useEffect re-runs automatically → new timer set from new exp. No manual reschedule needed; React's dependency system handles it. |
+| 4.6 | refreshAt <= 0 case: no timer set | Token already within 60s of expiry on mount. Spec says "if refreshAt > 0: set a setTimeout". Dashboard's getAccessToken() failure path (INV-06) handles the expired token case. |
 
 ---
 

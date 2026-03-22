@@ -297,40 +297,52 @@ Source: EXECUTION_PLAN.md Session 4
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | Timer set after login | setTimeout called with positive delay | |
-| TC-2 | Timer fires at exp - 60s | Refresh triggered before expiry | |
-| TC-3 | Timer reset after refresh | New timer set based on new token exp, not original login exp | |
-| TC-4 | Refresh failure → redirect | User sent to login page | |
-| TC-5 | Timer cleared on unmount | clearTimeout called in useEffect cleanup | |
+| TC-1 | Timer set after login | setTimeout called with positive delay | PASS — code inspection: `refreshAt = (exp * 1000) - Date.now() - 60000`; `if (refreshAt <= 0) return`; `setTimeout(..., refreshAt)` at line 33/44 |
+| TC-2 | Timer fires at exp - 60s | Refresh triggered before expiry | PENDING — runtime (requires waiting near token expiry) |
+| TC-3 | Timer reset after refresh | New timer set based on new token exp, not original login exp | PASS — code inspection: `setAccessToken(newToken)` triggers `accessToken` change → `useEffect` re-runs with new exp → new `setTimeout` scheduled |
+| TC-4 | Refresh failure → redirect | User sent to login page | PASS — code inspection: catch block: `setAccessToken(null); navigate('/', { replace: true })` at lines 41–42 |
+| TC-5 | Timer cleared on unmount | clearTimeout called in useEffect cleanup | PASS — code inspection: `return () => clearTimeout(id)` at line 48; runs on unmount AND on every `accessToken` change |
+| TC-6 | refreshAt <= 0 — no negative timer set | Token near/past expiry on mount does not call setTimeout with negative delay | PASS — code inspection: `if (refreshAt <= 0) return` at line 31 |
 
 ### Prediction Statement
 <!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason). -->
+**TC-6 — refreshAt <= 0 does not set a negative setTimeout (accepted)**
+`setTimeout` with a negative or zero delay fires immediately (or nearly so), which would trigger an unintended refresh loop on every render. The guard `if (refreshAt <= 0) return` prevents this. Confirmed by code inspection at line 31.
+
+**accessToken null on mount (rejected)**
+If `accessToken` is null (user not yet logged in), the effect returns early at line 26 (`if (!accessToken) return`). This is the expected path before authentication — no timer is set. Correct by design; not a missing test case.
+
+**Multiple AuthManager instances causing duplicate timers (rejected)**
+AuthManager is mounted exactly once in App.jsx. React's component tree guarantees a single instance. Only one timer can be active at any time. Not a test case.
+
+**Timer drift across multiple refreshes (rejected)**
+Each renewal calculates `refreshAt` from the new token's `exp` using `Date.now()` at the moment of scheduling. There is no accumulated drift. The formula is re-evaluated fresh each time. Not a test case.
 
 ### Code Review
 **Invariants touched:** INV-05, INV-06
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-05 | Timer is rescheduled after each successful `renew()` — not set only once at login | `frontend/src/components/AuthManager.jsx` — timer reset inside renew() success path | |
-| INV-05 | Timer delay calculated as `(exp * 1000) - Date.now() - 60000` — fires 60s before expiry, not at expiry | `AuthManager.jsx` — setTimeout delay expression | |
-| INV-06 | Failure path in the timer's renew() call redirects to `/` and clears TokenContext — does not silently continue without a token | `AuthManager.jsx` — catch/error handler | |
-| INV-05 | `clearTimeout` called in `useEffect` cleanup on unmount AND on every accessToken change — previous timer cancelled before new one is set | `AuthManager.jsx` — useEffect return function and dependency array | |
-| **Mount point** | `<AuthManager />` is mounted inside `App.jsx` within the `<Security>` wrapper but outside any route — present for the full session lifetime | `frontend/src/App.jsx` — AuthManager placement | |
+| INV-05 | Timer is rescheduled after each successful `renew()` — not set only once at login | `frontend/src/components/AuthManager.jsx` — timer reset inside renew() success path | PASS — `setAccessToken(newToken)` changes `accessToken` dep → `useEffect` re-runs → new `setTimeout` with new exp |
+| INV-05 | Timer delay calculated as `(exp * 1000) - Date.now() - 60000` — fires 60s before expiry, not at expiry | `AuthManager.jsx` — setTimeout delay expression | PASS — exact formula at line 30; confirmed by grep |
+| INV-06 | Failure path in the timer's renew() call redirects to `/` and clears TokenContext — does not silently continue without a token | `AuthManager.jsx` — catch/error handler | PASS — `setAccessToken(null)` + `navigate('/')` at lines 41–42 |
+| INV-05 | `clearTimeout` called in `useEffect` cleanup on unmount AND on every accessToken change — previous timer cancelled before new one is set | `AuthManager.jsx` — useEffect return function and dependency array | PASS — `return () => clearTimeout(id)` line 48; `accessToken` in dep array line 49 |
+| **Mount point** | `<AuthManager />` is mounted inside `App.jsx` within the `<Security>` wrapper but outside any route — present for the full session lifetime | `frontend/src/App.jsx` — AuthManager placement | PASS — `<AuthManager />` at App.jsx:44, directly inside `<Security>`, before `<Routes>` |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+- `decodeExp` defined locally again — same reasoning as Task 4.5; CLAUDE.md prohibits shared modules. 6-line function, used only in AuthManager.
+- No console logging of timer events — spec does not require frontend timer logs (only API structured logs are required by INV-23). Not added.
+- `refreshAt <= 0` returns without refresh — spec is explicit ("if refreshAt > 0"). The expired-token case is handled by Dashboard's `getAccessToken()` failure path (INV-06 already implemented in Task 4.2).
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[ ] All planned cases passed (TC-2 pending runtime)
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
-**Status:**
+**Status:** TC-1, TC-3, TC-4, TC-5, TC-6 PASS. TC-2 pending runtime (requires token near expiry).
 
 ---
 
