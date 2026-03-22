@@ -5,7 +5,7 @@
 **Engineer:** sandeeppolsani
 **Branch:** `session/2-api-a-core-auth`
 **Claude.md version:** v1.1
-**Status:** In Progress
+**Status:** Done
 
 ---
 
@@ -60,6 +60,6 @@
 ## Session Completion
 **Session integration check:** [x] PASSED
 **All tasks verified:** [x] Yes
-**PR raised:** [ ] Yes — PR #: `session/2-api-a-core-auth` → main
+**PR raised:** [x] Yes — PR #: `session/2-api-a-core-auth` → main
 **Status updated to:** Done
-**Engineer sign-off:**
+**Engineer sign-off:** sandeeppolsani
