@@ -13,9 +13,9 @@
 
 | Task Id | Task Name | Status | Commit |
 |---------|-----------|--------|--------|
-| 1.1 | Repository Scaffold | InProgress |  |
-| 1.2 | Frontend Vite Scaffold | Pending | |
-| 1.3 | Python Virtual Environments | Pending | |
+| 1.1 | Repository Scaffold | Done | ee039cd96ca92a64e3fde9ea692271a22334a440 |
+| 1.2 | Frontend Vite Scaffold | Done | da547f9a3f018afcc12ad29fcdcdde893c195f32 |
+| 1.3 | Python Virtual Environments | InProgress | |
 | 1.4 | Okta Configuration (Manual — Engineer-Executed) | Pending | |
 
 ---
@@ -24,7 +24,8 @@
 
 | Task | Decision made | Rationale |
 |------|---------------|-----------|
-|      |               |           |
+|   1.3   |   updated uvicor version from 0.29.1 to 0.30.0            |   uvicorn==0.29.1 does not exist on PyPI. The available versions jump from 0.29.0 directly to 0.30.0. This is a  
+  conflict with the Fixed Stack in CLAUDE.md.        |
 
 ---
 
@@ -32,7 +33,8 @@
 
 | Task | Deviation observed | Action taken |
 |------|--------------------|--------------|
-|      |                    |              |
+| 1.3  | uvicorn==0.29.1 does not exist on PyPI — updated to 0.30.0 in both requirements.txt files per
+   engineer decision. CLAUDE.md Fixed Stack will need updating. |   updated to 0.30.0    |
 
 ---
 
@@ -40,7 +42,8 @@
 
 | Change | Reason | New Claude.md version | Tasks re-verified |
 |--------|--------|-----------------------|-------------------|
-| None   |        |                       |                   |
+| updated uvicorn version from 0.29.1 to 0.30.0    |   uvicorn==0.29.1 does not exist on PyPI. The available versions jump from 0.29.0 directly to 0.30.0. This is a  
+  conflict with the Fixed Stack in CLAUDE.md.     |      v1.1                 |       1.3            |
 
 ---
 

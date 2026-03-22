@@ -43,6 +43,7 @@ For each item: accepted (added case) / rejected (reason). -->
 [x] Scope decisions documented
 
 **Status:**
+Done
 
 ---
 
@@ -151,6 +152,7 @@ With this task CC initiates frontent and install all the required dependencies f
 [x] Scope decisions documented
 
 **Status:**
+Done
 
 ---
 
@@ -161,31 +163,76 @@ Source: EXECUTION_PLAN.md Session 1
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | api-a venv imports cleanly | `api-a/.venv/bin/python -c "from jose import jwt; import httpx; import fastapi"` exits 0 | |
-| TC-2 | api-b venv imports cleanly | Same check for api-b venv exits 0 | |
-| TC-3 | Venvs are isolated | `which python` from root does not point into either .venv | |
+| TC-1 | api-a venv imports cleanly | `api-a/.venv/bin/python -c "from jose import jwt; import httpx; import fastapi"` exits 0 | PASS |
+| TC-2 | api-b venv imports cleanly | Same check for api-b venv exits 0 | PASS |
+| TC-3 | Venvs are isolated | `which python` from root does not point into either .venv | PASS |
+| TC-4 | uvicorn importable in both venvs | Import exits 0 | PASS — uvicorn OK (api-a and api-b) |
+| TC-5 | python-dotenv importable in both venvs | Import exits 0 | PASS — dotenv OK (api-a and api-b) |
+| TC-6 | No .py files modified | git diff on *.py returns nothing | PASS — empty output |
+| TC-7 | which python from root does not point into either .venv | Path outside both .venv directories | PASS — /c/Python314/python |
 
 ### Prediction Statement
-<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+This tasks creates and activates the virtual environments for API A and B, makes sure that all the dependencies are well installed.
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason). -->
+  ---
+  1. TC-3 — Venv isolation check not run                                                                           The spec explicitly lists: which python from root must not point into either .venv. This was never executed.
+  → Accepted — add case                                                                                          
+  
+  ---
+  2. uvicorn not included in import test
+  The task description says "Confirm both uvicorn and jose are importable" — yet the verification command (and   
+  what I ran) only checks jose, httpx, fastapi. uvicorn itself was never imported.
+  → Accepted — add case
+
+  ---
+  3. python-dotenv not included in import test
+  All 5 pinned packages should be importable. python-dotenv was not checked.
+  → Accepted — add case
+
+  ---
+  4. No .py files modified — not verified
+  The spec constraint is "Do not modify any .py files." No git diff was run on .py files to confirm this.        
+  → Accepted — add case
+
+  ---
+  5. No packages installed beyond requirements.txt — not verified
+  → Rejected — pip install was invoked exclusively with -r requirements.txt. No opportunity for extra packages to
+   be introduced. The full install log confirms only expected packages were resolved.
+
+  ---
 
 ### Code Review
 **Invariants touched:** None — dependency task only.
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+  ---                                                                                                              1. .venv/ directories not committed
+  Both api-a/.venv/ and api-b/.venv/ were created by the task but will not be committed. Accepted — .venv/ is in 
+  the root .gitignore and virtual environments are never source-controlled. They are reproducible from
+  requirements.txt.
+
+  ---
+  2. uvicorn==0.29.1 version correction
+  requirements.txt in both APIs was modified to change uvicorn[standard]==0.29.1 → 0.30.0 because 0.29.1 does not
+   exist on PyPI. Accepted — engineer decision made explicitly during the task. CLAUDE.md Fixed Stack updated to 
+  0.30.0 accordingly.
+
+  ---
+  3. bin/ vs Scripts/ path difference
+  The spec verification command uses api-a/.venv/bin/python (Linux convention). On this Windows machine the      
+  correct path is api-a/.venv/Scripts/python. Accepted — platform difference only, functionally equivalent. All  
+  tests were run against the correct Windows path.
+
+  ---
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
 **Status:**
-
+Done
 ---
 
 ## Task 1.4 — Okta Configuration (Manual — Engineer-Executed)
