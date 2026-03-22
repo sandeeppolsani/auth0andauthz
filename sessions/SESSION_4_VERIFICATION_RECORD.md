@@ -187,9 +187,9 @@ Source: EXECUTION_PLAN.md Session 4
 |------|----------|----------|--------|
 | TC-1 | All 8 buttons rendered | Count: 8 buttons present in DOM | PASS — `grep -c "<button" ApiTester.jsx` returns 8 |
 | TC-2 | No token — all buttons disabled | Buttons in disabled state, "Login required" message shown | PASS — code inspection: `if (!accessToken) return <div><strong>Login required</strong>...` — entire panel replaced, no buttons rendered |
-| TC-3 | GET /api/users with valid token | 200 green, user list displayed | PENDING — runtime |
-| TC-4 | GET /api/config with non-admin token | 403 amber displayed | PENDING — runtime |
-| TC-5 | Request with expired token | 401 red displayed | PENDING — runtime |
+| TC-3 | GET /api/users with valid token | 200 green, user list displayed | PASS — verified at runtime; green 200 with user list |
+| TC-4 | GET /api/config with non-admin token | 403 amber displayed | PASS — verified at runtime; amber 403 Forbidden displayed |
+| TC-5 | Request with expired token | 401 red displayed | PASS — verified at runtime; red 401 Unauthenticated displayed |
 | TC-6 | Full request visible | URL and truncated Bearer token shown above response | PASS — code inspection: ResponseBlock renders `method url` + `Authorization: Bearer {truncatedToken}` above status+body |
 | TC-7 | :id buttons disabled when input empty | GET/PUT /api/users/:id buttons not clickable until email entered | PASS — code inspection: `disabled={!idInputs.getUserEmail}` and `disabled={!idInputs.putUserEmail}` |
 | TC-8 | Network error displayed | fetch() throw renders status 0 + error message | PASS — code inspection: catch sets `{ status: 0, body: \`Network error: ${err.message}\` }` with gray border |
@@ -230,12 +230,12 @@ The spec mandates `Content-Type: application/json` on all calls. It's set uncond
 - `Content-Type: application/json` included on GET requests — spec mandates it on all calls. Benign for GET; required for POST/PUT.
 
 ### Verification Verdict
-[ ] All planned cases passed (TC-3/TC-4/TC-5 pending runtime)
+[x] All planned cases passed
 [x] CC challenge reviewed
 [x] Code review complete (if invariant-touching)
 [x] Scope decisions documented
 
-**Status:** TC-1, TC-2, TC-6, TC-7, TC-8 PASS. TC-3, TC-4, TC-5 pending runtime.
+**Status:** All 8 cases PASS (TC-1 through TC-8).
 
 ---
 
