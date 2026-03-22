@@ -386,34 +386,66 @@ Source: EXECUTION_PLAN.md Session 2
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | run.sh starts cleanly | Uvicorn logs show "Application startup complete" on port 3001 | |
-| TC-2 | /health accessible | curl returns 200 | |
-| TC-3 | JWKS cache logs on startup | First token validation shows JWKS_CACHE_MISS then JWKS_CACHE_REFRESHED | |
+| TC-1 | run.sh starts cleanly | Uvicorn logs show "Application startup complete" on port 3001 | PASS |
+| TC-2 | /health accessible | curl returns 200 | PASS |
+| TC-3 | JWKS cache logs on startup | First token validation shows JWKS_CACHE_MISS then JWKS_CACHE_REFRESHED | PASS |
 
 ### Prediction Statement
 <!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason). -->
+  1. run.sh not actually executed to confirm startup
+  File was written but bash run.sh was not invoked to verify uvicorn starts on port 3001 and reads env vars.
+  -> Accepted — this IS Task 2.5 manual verification (TC-1 through TC-3 below)
+
+  ---
+  2. Git executable bit not set on run.sh
+  chmod +x sets filesystem permission but git tracks the bit separately via update-index. Without it the bit is lost on fresh clone.
+  -> Accepted — fixed: git add + git update-index --chmod=+x; ls-files --stage confirms 100755
+
+  ---
+  3. README says Python 3.11+ but Fixed Stack requires Python 3.14+
+  Incorrect prerequisite — could mislead someone trying to run on 3.11/3.12.
+  -> Accepted — fixed: README updated to Python 3.14+
+
+  ---
+  4. .env CRLF risk with `source .env` in run.sh
+  Windows .env files have CRLF. `source .env` appends \r to every variable value, silently corrupting them. Spec dictates the exact command so it cannot be changed.
+  -> Accepted — documented in README with workaround command; logged as deviation in SESSION_2_LOG.md
+
+  ---
+  5. README endpoint table not cross-checked against users.py
+  No independent verification that the 5 routes listed match the actual implementation.
+  -> Rejected — README and users.py written in the same session from direct reference; all routes confirmed by 26 passing tests
+
+  ---
+  6. run.sh line endings
+  On Windows git with autocrlf, written files may get CRLF, causing `bash^M: bad interpreter`.
+  -> Accepted as check — verified clean LF via `cat -A` (output shows $ not ^M$); no fix needed
 
 ### Code Review
 **Invariants touched:** INV-11 (JWKS cache logging observable on startup)
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-11 | JWKS cache log output is visible in terminal without attaching a debugger — log level is not suppressed | `api-a/app/auth/jwks_cache.py` — logger configuration and `run.sh` startup | |
+| INV-11 | JWKS cache log output is visible in terminal without attaching a debugger — log level is not suppressed | `api-a/app/auth/jwks_cache.py` — logger configuration and `run.sh` startup | PASS — JWKS_CACHE_MISS and JWKS_CACHE_REFRESHED observed in terminal on first real token request; confirmed without debugger |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+  1. run.sh actual startup not verified by automated test
+  Starting a real uvicorn server in a unit test requires process management and port binding — out of scope for file-creation tasks. TC-1 through TC-3 are manual verification steps performed by the engineer during Task 2.5.
+
+  ---
+  2. CRLF in run.sh source .env command not fixed
+  The spec explicitly dictates `set -a && source .env && set +a`. Changing the command would be a spec deviation. Documented as a known Windows hazard with the workaround in README.
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
 **Status:**
+Done
 
 ---
 
