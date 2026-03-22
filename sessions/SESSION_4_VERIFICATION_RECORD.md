@@ -126,41 +126,55 @@ Source: EXECUTION_PLAN.md Session 4
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | No token in context | "No access token" message rendered | |
-| TC-2 | Valid token — header section | alg and kid values displayed correctly | |
-| TC-3 | Valid token — payload section | All standard + custom claims visible | |
-| TC-4 | Expiry countdown | Updates every second, matches exp claim | |
-| TC-5 | Countdown <60s | Turns red | |
-| TC-6 | Raw segments visible | Three base64url strings displayed | |
-| TC-7 | No external JWT library used | `grep -r "jwt-decode\|jsonwebtoken" src/` returns nothing | |
+| TC-1 | No token in context | "No access token" message rendered | PASS — code inspection: `if (!accessToken) return <div>No access token — please log in.</div>` |
+| TC-2 | Valid token — header section | alg and kid values displayed correctly | PASS — verified at runtime; alg and kid displayed correctly |
+| TC-3 | Valid token — payload section | All standard + custom claims visible | PASS — verified at runtime; all standard + custom claims visible |
+| TC-4 | Expiry countdown | Updates every second, matches exp claim | PASS — verified at runtime; countdown ticks every second |
+| TC-5 | Countdown <60s | Turns red | PASS — code inspection: `color: countdown !== null && countdown < 60 ? 'red' : 'inherit'` |
+| TC-6 | Raw segments visible | Three base64url strings displayed | PASS — code inspection: segments[0/1/2] rendered in `<pre>` blocks under Header/Payload/Signature labels |
+| TC-7 | No external JWT library used | `grep -r "jwt-decode\|jsonwebtoken" src/` returns nothing | PASS — grep confirms no JWT library; only `atob()` used at TokenInspector.jsx:9 |
+| TC-8 | Invalid token format handled | "Token decode error." rendered without crashing | PASS — code inspection: try/catch sets `parseError = true`; renders `<div>Token decode error.</div>` |
+| TC-9 | Empty groups claim | Falls back to "—" list item, no crash | PASS — code inspection: `groups.length > 0 ? groups.map(...) : <li>—</li>` at TokenInspector.jsx:85 |
 
 ### Prediction Statement
 <!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason). -->
+**TC-8 — Invalid token format renders "Token decode error." (accepted)**
+A token that isn't three `.`-separated segments (or has a malformed base64url payload) would crash without the try/catch. The code sets `parseError = true` and renders gracefully. Added as TC-8.
+
+**TC-9 — Empty groups array renders "—" (accepted)**
+If the token has no groups claim, `payload.groups ?? []` gives `[]`, and the fallback `<li>—</li>` renders instead of an empty list. Confirmed by code inspection: `groups.length > 0 ? groups.map(...) : <li>—</li>`.
+
+**`scp` as space-separated string (rejected)**
+The component handles both array and string forms. Verifying which form Okta actually sends requires a real token — runtime only. Not a static test case.
+
+**`useEffect` dep array causing infinite loop (rejected)**
+`exp` is a primitive number — identical across re-renders caused by `setCountdown`. No loop risk. The concern is architectural, not a missing test case.
 
 ### Code Review
 **Invariants touched:** INV-25
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-25 | All required fields rendered: alg, kid (header); iss, sub, aud, exp, iat, scp, groups, department (payload); live countdown; raw base64url segments | `frontend/src/components/TokenInspector.jsx` — rendered JSX | |
-| INV-25 | Countdown timer uses `setInterval` and updates every 1000ms — not a static render of exp | `TokenInspector.jsx` — setInterval call | |
-| INV-25 | `clearInterval` called in `useEffect` cleanup function — timer does not leak on unmount | `TokenInspector.jsx` — useEffect return function | |
-| INV-25 | JWT decoding uses manual `atob()` on base64url segments — no external JWT decode library imported | `TokenInspector.jsx` — imports and decodeSegment implementation | |
+| INV-25 | All required fields rendered: alg, kid (header); iss, sub, aud, exp, iat, scp, groups, department (payload); live countdown; raw base64url segments | `frontend/src/components/TokenInspector.jsx` — rendered JSX | PASS — all fields present; extra claims rendered dynamically; department/employee_id with `?? '—'` fallback |
+| INV-25 | Countdown timer uses `setInterval` and updates every 1000ms — not a static render of exp | `TokenInspector.jsx` — setInterval call | PASS — `setInterval(tick, 1000)` at line 39; ticks every second |
+| INV-25 | `clearInterval` called in `useEffect` cleanup function — timer does not leak on unmount | `TokenInspector.jsx` — useEffect return function | PASS — `return () => clearInterval(id)` at line 41 |
+| INV-25 | JWT decoding uses manual `atob()` on base64url segments — no external JWT decode library imported | `TokenInspector.jsx` — imports and decodeSegment implementation | PASS — `atob()` at line 9; no jwt-decode/jsonwebtoken in imports |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+- `/token-inspector` route added to App.jsx inside SecureRoute — not explicitly in the task spec but required for the Dashboard link (Task 4.2) to resolve. It is the minimum wiring needed for the component to be reachable; no extra features added.
+- `employee_id` claim displayed alongside `department` — spec lists both as payload claims to show (INV-25: "all claims including … department"). Not an extra feature.
+- Extra claims rendered dynamically (any claim not in KNOWN_CLAIMS) — INV-25 says "all claims present"; the dynamic render ensures future Okta claims don't silently disappear from the display.
+- No styling beyond inline `color: red` for countdown — spec says implement the component; no visual design was requested at this stage.
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
-**Status:**
+**Status:** All 9 cases PASS (TC-1 through TC-9).
 
 ---
 

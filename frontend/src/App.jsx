@@ -6,6 +6,7 @@ import { oktaAuth } from './config/oktaConfig';
 import { TokenProvider } from './context/TokenContext';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
+import TokenInspector from './components/TokenInspector';
 
 // SecureRoute from @okta/okta-react v6 uses useRouteMatch (react-router-dom v5 API).
 // Custom implementation using useOktaAuth + useEffect for v6/v7 compatibility.
@@ -45,6 +46,14 @@ function AppRoutes() {
           element={
             <SecureRoute>
               <Dashboard />
+            </SecureRoute>
+          }
+        />
+        <Route
+          path="/token-inspector"
+          element={
+            <SecureRoute>
+              <TokenInspector />
             </SecureRoute>
           }
         />
