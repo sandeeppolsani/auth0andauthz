@@ -17,7 +17,7 @@
 | 2.2 | JWKS Cache (API A) | Done | `4bc2ff5` |
 | 2.3 | JWT Auth Middleware (API A) | Done | `a1bec40` |
 | 2.4 | User Route Handlers (API A) | Done | `ecb368a` |
-| 2.5 | API A Startup Verification | Done | TBD |
+| 2.5 | API A Startup Verification | Done | `8d860db` |
 
 ---
 
