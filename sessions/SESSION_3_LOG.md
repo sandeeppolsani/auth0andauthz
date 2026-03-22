@@ -15,7 +15,7 @@
 |---------|-----------|--------|--------|
 | 3.1 | Mock Database (API B) | Done | pending commit |
 | 3.2 | JWKS Cache + JWT Auth Middleware (API B) | Done | pending commit |
-| 3.3 | API B Route Handlers | | |
+| 3.3 | API B Route Handlers | Done | pending |
 | 3.4 | API B Startup Script | | |
 
 ---
@@ -32,6 +32,9 @@
 | 3.2 | `require_scope` and `require_group` each inject `Request` to get `request.url.path` | INV-15 requires route in audit entry. Injecting `Request` is the idiomatic FastAPI way — no global state, no thread-local, route is always the real matched path. |
 | 3.2 | `require_group` depends on `verify_token` independently (not on `require_scope` output) | Both are listed as separate `Depends()` on admin routes. FastAPI deduplicates `verify_token` — it runs once. Scope check order is enforced by declaration order in the route. |
 | 3.2 | `required_scope` field in audit entry uses `group:<name>` prefix for group checks | Audit entry schema only has 4 fields (timestamp, subject, route, outcome). To distinguish scope vs group decisions in the JSON log (INV-23 `required_scope` field), `group:` prefix makes the decision type readable. |
+| 3.3 | `_scope` parameter name used for the first `Depends()` on dual-gated routes | The scope dep return value is unused by the route handler — `_` prefix signals this clearly without discarding the FastAPI dependency execution. |
+| 3.3 | `health` route placed in `analytics.py` router | Avoids a fourth router file for a single no-auth route. Health is conceptually a system status check that lives alongside the analytics data layer. |
+| 3.3 | Global exception handler path not directly triggered in route tests | Requires overriding `verify_token` with a raiser. Handler registration and correct response shape confirmed by TC-14. |
 
 ---
 
