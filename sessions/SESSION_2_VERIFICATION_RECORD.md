@@ -274,50 +274,108 @@ Source: EXECUTION_PLAN.md Session 2
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | GET /health — no token | 200 `{"status": "ok"}` | |
-| TC-2 | GET /api/users — no token | 401 | |
-| TC-3 | GET /api/users — valid token, api-a:read scope | 200, list of 3 users | |
-| TC-4 | GET /api/users — valid token, missing api-a:read | 403 | |
-| TC-5 | GET /api/users/alice@example.com — alice's own token | 200, alice's record | |
-| TC-6 | GET /api/users/alice@example.com — bob's token (non-admin) | 403 | |
-| TC-7 | GET /api/users/alice@example.com — admin token | 200 (ownership bypass) | |
-| TC-8 | POST /api/users — valid token with api-a:write | 201 with new record | |
-| TC-9 | PUT /api/users/alice@example.com — api-a:write scope | 200 with updated record | |
-| TC-10 | Any protected endpoint — expired token | 401 | |
-| TC-11 | CORS: request from http://localhost:3000 | 200 with correct CORS headers | |
-| TC-12 | CORS: request from http://evil.com | No CORS headers (request blocked by browser) | |
+| TC-1 | GET /health — no token | 200 `{"status": "ok"}` | PASS |
+| TC-2 | GET /api/users — no token | 401 | PASS |
+| TC-3 | GET /api/users — valid token, api-a:read scope | 200, list of 3 users | PASS |
+| TC-4 | GET /api/users — valid token, missing api-a:read | 403 | PASS |
+| TC-5 | GET /api/users/alice@example.com — alice's own token | 200, alice's record | PASS |
+| TC-6 | GET /api/users/alice@example.com — bob's token (non-admin) | 403 | PASS |
+| TC-7 | GET /api/users/alice@example.com — admin token | 200 (ownership bypass) | PASS |
+| TC-8 | POST /api/users — valid token with api-a:write | 201 with new record | PASS |
+| TC-9 | PUT /api/users/alice@example.com — api-a:write scope | 200 with updated record | PASS |
+| TC-10 | Any protected endpoint — expired token | 401 | PASS (auth middleware; dependency_overrides used in route tests) |
+| TC-11 | CORS: request from http://localhost:3000 | 200 with correct CORS headers | PASS |
+| TC-12 | CORS: disallowed origin does not get ACAO header | ACAO header absent or not set to evil.com | PASS |
+| TC-13 | GET /api/users/{user_email} — email not found (admin token) | 404 | PASS |
+| TC-14 | POST /api/users — duplicate email | 409 conflict | PASS |
+| TC-15 | PUT /api/users/{user_email} — user not found | 404 | PASS |
+| TC-16 | PUT /api/users/{user_email} — email key in body | email unchanged, other fields updated | PASS |
+| TC-17 | GET /api/users/{user_email} — insufficient scope | 403 | PASS |
+| TC-18 | POST /api/users — insufficient scope | 403 | PASS |
+| TC-19 | PUT /api/users/{user_email} — insufficient scope | 403 | PASS |
+| TC-20 | GET /api/users/{user_email} — no token | 401 | PASS |
+| TC-21 | POST /api/users — no token | 401 | PASS |
+| TC-22 | PUT /api/users/{user_email} — no token | 401 | PASS |
+| TC-23 | GET /api/users/{user_email} — non-admin, own email, record absent | 404 | PASS |
+| TC-24 | GET /api/users/{user_email} — ownership 403 response body structure | {"error": "insufficient_scope", "message": ...} | PASS |
+| TC-25 | POST /api/users — body missing email key | 500, {"error": "internal_error"}, no traceback | PASS |
+| TC-26 | PUT /api/users/{user_email} — body has only email key | 200, record unchanged | PASS |
+
+**26/26 PASS**
 
 ### Prediction Statement
-<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+Routes should enforce auth via require_scope Depends(). /health is public. /api/users returns all 3 seed records. /api/users/{email} enforces token.sub == record.email; api-b-admins group bypasses. POST returns 201. PUT returns 404 for missing users. CORS allows only http://localhost:3000.
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason). -->
+  1. Non-admin user requests their own email but record doesn't exist in DB
+  TC-13 only tested admin -> 404. A non-admin whose sub matches the path email but the record is absent follows a different code path: ownership check passes, then DB returns None -> 404. Not tested.
+  -> Accepted — added TC-23
+
+  ---
+  2. PUT with only the email key in the update body
+  safe_updates = {} after stripping email -> user.update({}) is a no-op -> returns unchanged record at 200. Not tested.
+  -> Accepted — added TC-26
+
+  ---
+  3. Ownership violation 403 response body structure not verified
+  TC-6 asserted status 403 but never checked body is {"error": "insufficient_scope", "message": "..."} (INV-16).
+  -> Accepted — added TC-24
+
+  ---
+  4. POST body missing the email key entirely
+  KeyError in mock_db.create_user -> global exception handler -> 500 with {"error": "internal_error", ...}. Natural path that exercises INV-21 handler without a test-only route.
+  -> Accepted — added TC-25
+
+  ---
+  5. CORS — disallowed origin does not get ACAO header
+  TC-12 was in original spec. Server doesn't reject the request but must not echo the disallowed origin as ACAO. Testable via TestClient.
+  -> Accepted — added TC-12 (PASS)
+
+  ---
+  6. groups claim absent entirely from token
+  claims.get("groups", []) returns [] if key missing — identical path to non-admin with empty groups. No new code path.
+  -> Rejected — default [] covers this; no observable behavioral gap
+
+  ---
+  7. sub claim missing from token
+  claims.get("sub", "") returns "" — never matches any email path param -> ownership check fails -> 403. Same code path as wrong-sub case already tested in TC-6.
+  -> Rejected — same code path, no new coverage
+
+  ---
+  8. Response body field completeness for PUT/POST
+  Verifying all fields present in the response body retests mock_db.create_user/update_user return values, already covered in Task 2.1 TC-4 and TC-5.
+  -> Rejected — testing mock_db behaviour, not route behaviour
 
 ### Code Review
 **Invariants touched:** INV-07, INV-12, INV-14, INV-16, INV-20, INV-21, INV-23
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-07 | `require_scope(...)` applied via `Depends()` on every protected route — health endpoint explicitly excluded | `api-a/app/routes/users.py` — all route decorators | |
-| INV-12 | Missing scope returns 403, not 401 — `require_scope` raises `HTTPException(403)` | `api-a/app/auth/__init__.py` — `require_scope` exception | |
-| INV-14 | `GET /api/users/{user_email}` compares `token.sub` to `record["email"]` — not any other field | `api-a/app/routes/users.py` — ownership check block | |
-| INV-14 | Admin bypass reads from `claims["groups"]` claim, not from a DB lookup | `api-a/app/routes/users.py` — admin group check | |
-| INV-16 | All 401 responses use structured JSON: `{"error": "...", "message": "..."}` | All `HTTPException(401)` raises across auth module | |
-| INV-20 | `allow_origins` in CORS middleware is `["http://localhost:3000"]` — not `["*"]`, not empty | `api-a/app/main.py` — CORS middleware config | |
-| INV-21 | Global exception handler catches unhandled exceptions and returns generic message — no stack trace | `api-a/app/main.py` — exception handler | |
-| INV-23 | `_log_auth_decision` emits structured JSON with: timestamp, subject, route, required_scope, outcome | `api-a/app/auth/__init__.py` — `_log_auth_decision` function | |
+| INV-07 | `require_scope(...)` applied via `Depends()` on every protected route — health endpoint explicitly excluded | `api-a/app/routes/users.py` — all route decorators | PASS — /health has no Depends; all 4 others use require_scope |
+| INV-12 | Missing scope returns 403, not 401 — `require_scope` raises `HTTPException(403)` | `api-a/app/auth/__init__.py` — `require_scope` exception | PASS — TC-4, TC-17, TC-18, TC-19 all confirm 403 |
+| INV-14 | `GET /api/users/{user_email}` compares `token.sub` to `record["email"]` — not any other field | `api-a/app/routes/users.py` — ownership check block | PASS — `token_sub != user_email` is the guard expression |
+| INV-14 | Admin bypass reads from `claims["groups"]` claim, not from a DB lookup | `api-a/app/routes/users.py` — admin group check | PASS — `"api-b-admins" in groups` where groups = claims.get("groups", []) |
+| INV-16 | All 401 responses use structured JSON: `{"error": "...", "message": "..."}` | All `HTTPException(401)` raises across auth module | PASS — inherited from verify_token (Task 2.3); TC-2, TC-20, TC-21, TC-22 confirm 401 |
+| INV-20 | `allow_origins` in CORS middleware is `["http://localhost:3000"]` — not `["*"]`, not empty | `api-a/app/main.py` — CORS middleware config | PASS — `allow_origins=["http://localhost:3000"]` literal confirmed |
+| INV-21 | Global exception handler catches unhandled exceptions and returns generic message — no stack trace | `api-a/app/main.py` — exception handler | PASS — handler registered; returns `{"error": "internal_error", "message": "An unexpected error occurred"}` |
+| INV-23 | `_log_auth_decision` emits structured JSON with: timestamp, subject, route, required_scope, outcome | `api-a/app/auth/__init__.py` — `_log_auth_decision` function | PASS — 5-field JSON dict confirmed by code review (inherited from Task 2.3) |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+  1. TC-10 (expired token) tested via dependency_overrides, not real JWT
+  At the route handler layer, auth is exercised through dependency_overrides. The expired-token path through verify_token is fully tested in Task 2.3 (TC-3). Splitting the integration would require signing real tokens. Accepted.
+
+  ---
+  2. Response body field completeness not tested for POST/PUT responses
+  Verifying all fields present in the response retests mock_db return values already covered in Task 2.1. Accepted out of scope — route tests focus on HTTP semantics, not DB return shape.
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
 **Status:**
+Done
 
 ---
 
