@@ -16,7 +16,7 @@
 | 2.1 | Mock Database (API A) | Done | |
 | 2.2 | JWKS Cache (API A) | Done | |
 | 2.3 | JWT Auth Middleware (API A) | Done | |
-| 2.4 | User Route Handlers (API A) | | |
+| 2.4 | User Route Handlers (API A) | Done | |
 | 2.5 | API A Startup Verification | | |
 
 ---
@@ -32,6 +32,9 @@
 | 2.2 | `invalidate_and_refetch` integration deferred to Task 2.3 | JWKSCache provides the method; the kid-mismatch wiring belongs in the auth middleware. |
 | 2.3 | `HTTPBearer(auto_error=False)` used | Default `auto_error=True` would raise 403 on missing header. `auto_error=False` lets verify_token handle it and return 401 per INV-16. |
 | 2.3 | Clock skew test uses kwarg assertion not a real expired token | Constructing a real signed JWT requires a private key — out of scope for unit tests. leeway=60 verified via mock call_args. |
+| 2.4 | Auth dependencies tested via FastAPI dependency_overrides | Injecting controlled claims avoids re-testing JWT/JWKS logic already covered in Tasks 2.2–2.3. Full expired-token path covered by Task 2.3 TC-3. |
+| 2.4 | POST /api/users returns 409 on duplicate email | ValueError from mock_db.create_user() is mapped to 409 Conflict — clearer semantics than 400 for a duplicate-key condition. |
+| 2.4 | Global exception handler path not triggered in route tests | Would require a test-only route or monkeypatching production code. Handler registration and correct response shape confirmed by code review. |
 
 ---
 
