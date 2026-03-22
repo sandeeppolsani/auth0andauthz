@@ -13,9 +13,9 @@
 
 | Task Id | Task Name | Status | Commit |
 |---------|-----------|--------|--------|
-| 3.1 | Mock Database (API B) | Done | pending commit |
-| 3.2 | JWKS Cache + JWT Auth Middleware (API B) | Done | pending commit |
-| 3.3 | API B Route Handlers | Done | pending |
+| 3.1 | Mock Database (API B) | Done | `ecf4000` |
+| 3.2 | JWKS Cache + JWT Auth Middleware (API B) | Done | `f06ebcb` + `2aaae68` |
+| 3.3 | API B Route Handlers | Done | `46bc611` |
 | 3.4 | API B Startup Script | | |
 
 ---
