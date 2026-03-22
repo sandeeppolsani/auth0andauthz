@@ -14,7 +14,7 @@
 | Task Id | Task Name | Status | Commit |
 |---------|-----------|--------|--------|
 | 4.1 | Okta Auth Configuration and Router | Done | 721a50a |
-| 4.2 | Login Page and Dashboard | | |
+| 4.2 | Login Page and Dashboard | Done | TBD |
 | 4.3 | Token Inspector Panel | | |
 | 4.4 | API Tester Panel | | |
 | 4.5 | Token Refresh Demo Panel | | |
@@ -29,6 +29,8 @@
 | 4.1 | tokenManager.storage: 'sessionStorage' (spec-mandated) | SDK stores all tokens in sessionStorage instead of default localStorage. Access tokens will be extracted into React component state for API use in Tasks 4.2+. Comment in oktaConfig.js documents the INV-02/INV-03 behaviour to verify. |
 | 4.1 | BrowserRouter as outer wrapper; Security inside AppRoutes component | restoreOriginalUri uses useNavigate which requires Router context. Pattern: BrowserRouter → AppRoutes → Security → Routes. |
 | 4.1 | Placeholder LoginPage and Dashboard defined inline in App.jsx | Spec says placeholders only for this task. Will be extracted to separate page files in Task 4.2. |
+| 4.2 | TokenProvider wraps BrowserRouter (outermost) | Token context must be available to all components including those outside the router tree (e.g. future panels). Outermost placement satisfies this. |
+| 4.2 | Dashboard signOut on missing token (INV-06) | If getAccessToken() returns undefined after authentication, session is broken — signOut + redirect to / rather than silently continuing with no token. |
 
 ---
 
