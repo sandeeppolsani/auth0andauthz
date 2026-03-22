@@ -15,7 +15,7 @@
 |---------|-----------|--------|--------|
 | 5.1 | M2M Token Fetch (API A) | Done | 068d086 |
 | 5.2 | Internal Pull-Analytics Endpoint (API A) | Done | 9a6ef69 |
-| 5.3 | M2M End-to-End Verification | Done | pending commit |
+| 5.3 | M2M End-to-End Verification | Done | a72a6d3 |
 
 ---
 
