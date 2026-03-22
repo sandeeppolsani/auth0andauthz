@@ -297,10 +297,8 @@ echo "No token: $STATUS (expect 401)"
 kill %1
 ```
 
-**Prediction:**
-<!-- LEAVE BLANK — engineer writes prediction before running -->
+**Prediction:** Audit log is happening correctly
 
-**Result:**
-<!-- LEAVE BLANK -->
+**Result:** Completed
 
-**Verdict:** [ ] PASSED
+**Verdict:** [*] PASSED
