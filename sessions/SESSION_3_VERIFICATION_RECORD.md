@@ -102,9 +102,22 @@ Source: EXECUTION_PLAN.md Session 3 + jwks_cache.py independent test suite
 | TC-10 | jwks_cache is module-level singleton | Same object reference on repeated access | PASS |
 | TC-11 | leeway=60 passed to jwt.decode | mock_decode called with options.leeway == 60 | PASS |
 | TC-12 | No api-a imports in api-b auth module | AST scan finds no cross-service imports | PASS |
+| TC-13 | verify_token — no Authorization header → 401 | 401 with error=invalid_token | PASS (CC add) |
+| TC-14 | verify_token — malformed token string → 401 | 401 with error=invalid_token | PASS (CC add) |
+| TC-15 | verify_token — kid not found after invalidate_and_refetch → 401 | 401 with error=invalid_token | PASS (CC add) |
+| TC-16 | require_scope — scp as space-separated string is handled | 200, scope accepted | PASS (CC add) |
 
 ### CC Challenge Output
-<!-- To be filled after CC challenge -->
+
+| Item raised | Decision |
+|-------------|----------|
+| `verify_token` — no Authorization header (`credentials is None`) → 401 | Accepted — TC-13 added |
+| `verify_token` — malformed token string (`jwt.get_unverified_header` raises JWTError) → 401 | Accepted — TC-14 added |
+| `verify_token` — kid not found even after `invalidate_and_refetch` → 401 (INV-09 two-step retry) | Accepted — TC-15 added |
+| `require_scope` — `scp` claim is a space-separated string, not a list | Accepted — TC-16 added |
+| `require_group` — claims with no `groups` key vs explicit `[]` | Rejected — `claims.get("groups", [])` and `[]` are identical code paths |
+| `_log_auth_decision` with missing `sub` key → `"anonymous"` default | Rejected — Okta always issues `sub`; defensive default, not a reachable production gap |
+| Audit entries from multiple different routes in one test | Rejected — TC-8 already verifies `route` field is captured; growth behaviour is route-agnostic |
 
 ### Code Review
 **Invariants touched:** INV-07, INV-08, INV-09, INV-10, INV-11, INV-13, INV-15, INV-18, INV-23
@@ -123,15 +136,20 @@ Source: EXECUTION_PLAN.md Session 3 + jwks_cache.py independent test suite
 | **Independence** | No `api-a/` imports | All import statements in `api-b/app/auth/__init__.py` | PASS — confirmed by TC-12 |
 
 ### Scope Decisions
-<!-- To be filled after CC challenge -->
+
+| Item | Accepted as out of scope | Reason |
+|------|--------------------------|--------|
+| `require_group` missing-key vs empty-list distinction | Out of scope | `dict.get("groups", [])` collapses both to the same empty list — there is no separate branch to test. |
+| `_log_auth_decision` anonymous subject default | Out of scope | The `sub` claim is always present in a valid Okta JWT. The default exists as a defensive fallback, not a real production path. Testing it would be testing Python's `dict.get` default, not our logic. |
+| Multi-route audit accumulation | Out of scope | TC-8 already verifies the `route` field is set correctly per request. The list-append behaviour of `append_audit_entry` is covered by Task 3.1 tests. |
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
+[x] All planned cases passed
+[x] CC challenge reviewed
 [x] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] Scope decisions documented
 
-**Status:** Tests PASS — awaiting CC challenge
+**Status:** PASSED — 24 tests (8 JWKS cache + 16 auth middleware), all PASS
 
 ---
 

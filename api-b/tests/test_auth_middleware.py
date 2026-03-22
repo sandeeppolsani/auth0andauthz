@@ -269,3 +269,63 @@ def test_no_api_a_imports():
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             module = getattr(node, "module", "") or ""
             assert not module.startswith("api_a"), f"Cross-service import found: {module}"
+
+
+# ---------------------------------------------------------------------------
+# TC-13 (CC add)  verify_token — missing Authorization header → 401
+# ---------------------------------------------------------------------------
+
+def test_verify_token_no_auth_header_returns_401():
+    _clear_overrides()
+    resp = client.get("/scope-read")  # no Authorization header, no override
+    assert resp.status_code == 401
+    body = resp.json()
+    assert body["detail"]["error"] == "invalid_token"
+
+
+# ---------------------------------------------------------------------------
+# TC-14 (CC add)  verify_token — malformed token string → 401
+# ---------------------------------------------------------------------------
+
+def test_verify_token_malformed_token_returns_401():
+    _clear_overrides()
+    resp = client.get("/scope-read", headers={"Authorization": "Bearer not.a.jwt"})
+    assert resp.status_code == 401
+    body = resp.json()
+    assert body["detail"]["error"] == "invalid_token"
+
+
+# ---------------------------------------------------------------------------
+# TC-15 (CC add)  verify_token — kid not found after invalidate_and_refetch → 401
+# ---------------------------------------------------------------------------
+
+def test_verify_token_kid_not_found_after_refetch_returns_401():
+    import app.auth as auth_module
+    from unittest.mock import patch as _patch
+
+    _clear_overrides()
+    with _patch("app.auth.jwt.get_unverified_header", return_value={"kid": "missing-kid"}):
+        with _patch.object(auth_module.jwks_cache, "get_key", return_value=None):
+            with _patch.object(auth_module.jwks_cache, "invalidate_and_refetch"):
+                resp = client.get(
+                    "/scope-read",
+                    headers={"Authorization": "Bearer fake.token.value"},
+                )
+    assert resp.status_code == 401
+    body = resp.json()
+    assert body["detail"]["error"] == "invalid_token"
+
+
+# ---------------------------------------------------------------------------
+# TC-16 (CC add)  require_scope — scp as space-separated string is handled
+# ---------------------------------------------------------------------------
+
+def test_require_scope_scp_as_string():
+    _reset_audit()
+    _clear_overrides()
+    # scp is a string, not a list
+    claims = {"sub": "alice@example.com", "scp": "api-b:read api-b:admin", "groups": []}
+    _test_app.dependency_overrides[verify_token] = lambda: claims
+    resp = client.get("/scope-read")
+    _clear_overrides()
+    assert resp.status_code == 200
