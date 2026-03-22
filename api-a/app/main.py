@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.routes.internal import router as internal_router
 from app.routes.users import router
 
 app = FastAPI()
@@ -26,3 +27,4 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 app.include_router(router)
+app.include_router(internal_router)
