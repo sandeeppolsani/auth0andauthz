@@ -53,16 +53,68 @@ Source: EXECUTION_PLAN.md Session 1
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | Dev server starts | `npm run dev` in frontend/ starts without errors | |
-| TC-2 | Okta packages installed | `ls frontend/node_modules/@okta` shows both packages | |
-| TC-3 | .env.example present | File exists with all 4 keys | |
+| TC-1 | Dev server starts | `npm run dev` in frontend/ starts without errors | PASS |
+| TC-2 | Okta packages installed | `ls frontend/node_modules/@okta` shows both packages | PASS |
+| TC-3 | .env.example present | File exists with all 4 keys | PASS |
+
+#### Additional Tests
+| # | Test                        | Result |
+|---|-----------------------------|--------|
+| 1 | HTTP curl check             | ✅ Server returned valid HTML with @react-refresh and /src/main.jsx — React/Vite page confirmed |
+| 2 | react-router-dom in node_modules | ✅ Present |
+| 3 | .env.example content        | ✅ All 4 keys (VITE_OKTA_DOMAIN, VITE_OKTA_CLIENT_ID, VITE_OKTA_ISSUER, VITE_OKTA_REDIRECT_URI), all empty |
+| 4 | frontend/.gitignore final state | ✅ .env (line 10), dist (line 12) both present |
+| 5 | Credential scan on frontend files | ✅ Only @okta/okta-auth-js and @okta/okta-react package name references in package.json / package-lock.json — no config values, no secrets |
+| 6 | Vite src/ — no extra components | ✅ Only Vite defaults: App.jsx, main.jsx, App.css, index.css, assets/ |
 
 ### Prediction Statement
-<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+With this task CC initiates frontent and install all the required dependencies for frontend. it bootstraps .env.example file with needed okta configurations.
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason). -->
+  1. HTTP curl check not run
+  The spec verification command explicitly does:                                                                 
+  curl -s http://localhost:3000 | grep -i "vite\|react"                                                          
+  I confirmed the server started from CLI output but never made an HTTP request to verify it serves a React page.
+  → Accepted — add case
+
+  ---
+  2. react-router-dom presence not verified
+  I only ran ls node_modules/@okta. react-router-dom was installed but never confirmed in node_modules/.
+  → Accepted — add case
+
+  ---
+  3. .env.example not read back
+  I wrote the file but never read it back to confirm all 4 keys are present with empty values.
+  → Accepted — add case (low risk, but spec says "File exists with all 4 keys")
+
+  ---
+  4. frontend/.gitignore final state not verified
+  After editing to add .env, I didn't read it back to confirm both .env and dist/ are present.
+  → Accepted — add case
+
+  ---
+  5. No credential scan on frontend files
+  INV-22 check was run on api-a/ and api-b/ in Task 1.1 but not on frontend/ files (vite.config.js, package.json,
+   etc.) here.
+  → Accepted — add case
+
+  ---
+  6. Vite-generated source files not inspected
+  The spec says "Do not create any React components beyond what Vite generates." I didn't read src/ to confirm no
+   extra components were added and no Okta config values crept in.
+  → Accepted — add case
+
+  ---
+  7. package.json not checked
+  node_modules/ presence confirms install succeeded but package.json is the authoritative record that all 3      
+  packages are listed as dependencies.
+  → Rejected — node_modules/@okta check plus zero-vulnerability install output is sufficient confirmation.       
+  package.json would be redundant here.
+
+  ---
+  8. Package versions
+  Fixed stack says "latest compatible" for all three — no specific version to assert against.
+  → Rejected — no version to verify.
 
 ### Code Review
 **Invariants touched:** INV-22 (no Okta credentials written yet)
@@ -72,13 +124,31 @@ For each item: accepted (added case) / rejected (reason). -->
 | INV-22 | No Okta credential values in any file at this stage | `frontend/` directory | |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+  ---                                                                                                              1. package-lock.json created
+  Not mentioned in the Task 1.2 spec. Accepted — it's a standard npm install artifact required for reproducible  
+  installs. It will be committed alongside the scaffold.    
+
+  ---
+  2. @okta package names appearing in credential scan
+  The INV-22 grep flagged @okta/okta-auth-js and @okta/okta-react in package.json and package-lock.json. Accepted
+   — these are dependency declarations, not Okta credential values. INV-22 covers credential string literals     
+  (client_id, client_secret, domain URLs), not package names.
+
+  ---
+  3. Vite-generated files beyond what the spec lists
+  vite.config.js, index.html, public/, eslint.config.js, assets/hero.png were created by the Vite scaffold. The  
+  spec only calls out src/ components. Accepted — all standard Vite template output, no application logic added. 
+
+  ---
+  4. frontend/.gitignore pre-existed from Vite
+  The spec says "Create frontend/.gitignore (if not already present)." Vite generated one automatically. Accepted
+   — the existing file was edited to add .env rather than replaced. End state satisfies the requirement.
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
 **Status:**
 
