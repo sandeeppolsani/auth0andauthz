@@ -15,8 +15,8 @@
 |---------|-----------|--------|--------|
 | 4.1 | Okta Auth Configuration and Router | Done | 721a50a |
 | 4.2 | Login Page and Dashboard | Done | adb01ed |
-| 4.3 | Token Inspector Panel | Done | TBD |
-| 4.4 | API Tester Panel | | |
+| 4.3 | Token Inspector Panel | Done | f2e3e75 |
+| 4.4 | API Tester Panel | Done | TBD |
 | 4.5 | Token Refresh Demo Panel | | |
 | 4.6 | Proactive Silent Refresh Timer | | |
 
@@ -32,6 +32,8 @@
 | 4.2 | TokenProvider wraps BrowserRouter (outermost) | Token context must be available to all components including those outside the router tree (e.g. future panels). Outermost placement satisfies this. |
 | 4.2 | Dashboard signOut on missing token (INV-06) | If getAccessToken() returns undefined after authentication, session is broken — signOut + redirect to / rather than silently continuing with no token. |
 | 4.3 | /token-inspector route added to App.jsx inside SecureRoute | Component requires authenticated context to read TokenContext. Route is the Dashboard link target established in Task 4.2. |
+| 4.4 | /api-tester route added to App.jsx inside SecureRoute | Component requires access token from TokenContext. Route is the Dashboard link target established in Task 4.2. |
+| 4.4 | Network error (fetch throws) rendered as status 0 + error message | CORS failures and connection-refused errors throw before a response exists. Status 0 with gray border distinguishes them from HTTP 4xx/5xx. |
 
 ---
 

@@ -185,40 +185,57 @@ Source: EXECUTION_PLAN.md Session 4
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | All 8 buttons rendered | Count: 8 buttons present in DOM | |
-| TC-2 | No token — all buttons disabled | Buttons in disabled state, "Login required" message shown | |
-| TC-3 | GET /api/users with valid token | 200 green, user list displayed | |
-| TC-4 | GET /api/config with non-admin token | 403 amber displayed | |
-| TC-5 | Request with expired token | 401 red displayed | |
-| TC-6 | Full request visible | URL and truncated Bearer token shown above response | |
+| TC-1 | All 8 buttons rendered | Count: 8 buttons present in DOM | PASS — `grep -c "<button" ApiTester.jsx` returns 8 |
+| TC-2 | No token — all buttons disabled | Buttons in disabled state, "Login required" message shown | PASS — code inspection: `if (!accessToken) return <div><strong>Login required</strong>...` — entire panel replaced, no buttons rendered |
+| TC-3 | GET /api/users with valid token | 200 green, user list displayed | PENDING — runtime |
+| TC-4 | GET /api/config with non-admin token | 403 amber displayed | PENDING — runtime |
+| TC-5 | Request with expired token | 401 red displayed | PENDING — runtime |
+| TC-6 | Full request visible | URL and truncated Bearer token shown above response | PASS — code inspection: ResponseBlock renders `method url` + `Authorization: Bearer {truncatedToken}` above status+body |
+| TC-7 | :id buttons disabled when input empty | GET/PUT /api/users/:id buttons not clickable until email entered | PASS — code inspection: `disabled={!idInputs.getUserEmail}` and `disabled={!idInputs.putUserEmail}` |
+| TC-8 | Network error displayed | fetch() throw renders status 0 + error message | PASS — code inspection: catch sets `{ status: 0, body: \`Network error: ${err.message}\` }` with gray border |
 
 ### Prediction Statement
 <!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason). -->
+**TC-7 — :id buttons disabled when email input is empty (accepted)**
+`GET /api/users/:id` and `PUT /api/users/:id` would call the API with an empty path segment if the button were always enabled. The `disabled={!email}` guard prevents that. Confirmed by code inspection.
+
+**TC-8 — Network error (fetch throws) displayed gracefully (accepted)**
+When API A/B is not running, `fetch()` throws before returning a response. Without the try/catch, the component would crash. The catch renders `status: 0` with gray border and the error message. Confirmed by code inspection.
+
+**POST body Content-Type mismatch (rejected)**
+The spec mandates `Content-Type: application/json` on all calls. It's set unconditionally in the headers object. Testing a case where it's absent is not relevant — it's always present.
+
+**:id button disabled check with whitespace-only input (rejected)**
+`disabled={!idInputs.getUserEmail}` — an input of spaces is truthy and would be sent. This is a UX edge case beyond the lab scope; the spec says "prompt user for email", not "validate email format".
+
+**All 8 responses stored independently (rejected)**
+`setResponse` keys each response by endpoint id. Calling one endpoint doesn't overwrite another. This is structural — correct by design, not a test case.
 
 ### Code Review
 **Invariants touched:** INV-24, INV-27
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-24 | All 8 protected endpoints from Brief Sections 5.1 and 5.2 have corresponding buttons: `GET /api/users`, `GET /api/users/:id`, `POST /api/users`, `PUT /api/users/:id` (API A); `GET /api/analytics/summary`, `GET /api/config`, `POST /api/config`, `GET /api/audit-log` (API B) | `frontend/src/components/ApiTester.jsx` — button list | |
-| INV-27 | Status 200 renders with green treatment; 401 renders with red + "Unauthenticated" label; 403 renders with amber + "Forbidden" label — all three are visually distinct | `ApiTester.jsx` — status rendering logic and CSS classes | |
-| INV-27 | Raw response body always displayed below the status code — not hidden or collapsed by default | `ApiTester.jsx` — response display section | |
-| INV-02 | No `localStorage` usage for response storage — component state only | `ApiTester.jsx` — all state declarations | |
+| INV-24 | All 8 protected endpoints from Brief Sections 5.1 and 5.2 have corresponding buttons: `GET /api/users`, `GET /api/users/:id`, `POST /api/users`, `PUT /api/users/:id` (API A); `GET /api/analytics/summary`, `GET /api/config`, `POST /api/config`, `GET /api/audit-log` (API B) | `frontend/src/components/ApiTester.jsx` — button list | PASS — 8 `<button>` elements confirmed; all 8 endpoint labels match exactly |
+| INV-27 | Status 200 renders with green treatment; 401 renders with red + "Unauthenticated" label; 403 renders with amber + "Forbidden" label — all three are visually distinct | `ApiTester.jsx` — `getStatusStyle` and `getStatusLabel` functions | PASS — 200→green, 401→red+"Unauthenticated", 403→orange+"Forbidden"; all three distinct |
+| INV-27 | Raw response body always displayed below the status code — not hidden or collapsed by default | `ApiTester.jsx` — `ResponseBlock` `<pre>` block | PASS — `<pre>{response.body}</pre>` rendered unconditionally when response exists |
+| INV-02 | No `localStorage` usage for response storage — component state only | `ApiTester.jsx` — all state declarations | PASS — grep returns nothing; only `useState` used for responses |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+- `/api-tester` route added to App.jsx inside SecureRoute — necessary for the Dashboard link to resolve; minimum wiring, no extra features.
+- Network error (status 0, gray border) — not in the original 6 test cases but required for robustness; APIs may not be running during frontend development. Added as TC-8.
+- `:id` text inputs placed inline with the button — spec says "prompt user for email in a text input before calling"; inline input is the simplest implementation that satisfies this without a modal or separate page.
+- `Content-Type: application/json` included on GET requests — spec mandates it on all calls. Benign for GET; required for POST/PUT.
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[ ] All planned cases passed (TC-3/TC-4/TC-5 pending runtime)
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
-**Status:**
+**Status:** TC-1, TC-2, TC-6, TC-7, TC-8 PASS. TC-3, TC-4, TC-5 pending runtime.
 
 ---
 
