@@ -17,7 +17,7 @@
 | 4.2 | Login Page and Dashboard | Done | adb01ed |
 | 4.3 | Token Inspector Panel | Done | f2e3e75 |
 | 4.4 | API Tester Panel | Done | 6877707 |
-| 4.5 | Token Refresh Demo Panel | | |
+| 4.5 | Token Refresh Demo Panel | Done | TBD |
 | 4.6 | Proactive Silent Refresh Timer | | |
 
 ---
@@ -34,6 +34,8 @@
 | 4.3 | /token-inspector route added to App.jsx inside SecureRoute | Component requires authenticated context to read TokenContext. Route is the Dashboard link target established in Task 4.2. |
 | 4.4 | /api-tester route added to App.jsx inside SecureRoute | Component requires access token from TokenContext. Route is the Dashboard link target established in Task 4.2. |
 | 4.4 | Network error (fetch throws) rendered as status 0 + error message | CORS failures and connection-refused errors throw before a response exists. Status 0 with gray border distinguishes them from HTTP 4xx/5xx. |
+| 4.5 | getAccessToken() used after renew() instead of extracting from Token object | renew() returns a Token object whose shape varies across SDK versions. getAccessToken() is the stable public API for retrieving the string. |
+| 4.5 | /token-refresh route added to App.jsx inside SecureRoute | Component requires authenticated context and token in TokenContext. Route is the Dashboard link target from Task 4.2. |
 
 ---
 

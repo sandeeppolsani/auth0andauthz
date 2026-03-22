@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import TokenInspector from './components/TokenInspector';
 import ApiTester from './components/ApiTester';
+import TokenRefreshDemo from './components/TokenRefreshDemo';
 
 // SecureRoute from @okta/okta-react v6 uses useRouteMatch (react-router-dom v5 API).
 // Custom implementation using useOktaAuth + useEffect for v6/v7 compatibility.
@@ -63,6 +64,14 @@ function AppRoutes() {
           element={
             <SecureRoute>
               <ApiTester />
+            </SecureRoute>
+          }
+        />
+        <Route
+          path="/token-refresh"
+          element={
+            <SecureRoute>
+              <TokenRefreshDemo />
             </SecureRoute>
           }
         />
