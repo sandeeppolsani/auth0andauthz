@@ -13,7 +13,7 @@
 
 | Task Id | Task Name | Status | Commit |
 |---------|-----------|--------|--------|
-| 5.1 | M2M Token Fetch (API A) | Done | pending commit |
+| 5.1 | M2M Token Fetch (API A) | Done | 068d086 |
 | 5.2 | Internal Pull-Analytics Endpoint (API A) | | |
 | 5.3 | M2M End-to-End Verification | | |
 
