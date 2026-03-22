@@ -15,7 +15,7 @@
 |---------|-----------|--------|--------|
 | 5.1 | M2M Token Fetch (API A) | Done | 068d086 |
 | 5.2 | Internal Pull-Analytics Endpoint (API A) | Done | 9a6ef69 |
-| 5.3 | M2M End-to-End Verification | | |
+| 5.3 | M2M End-to-End Verification | Done | pending commit |
 
 ---
 
@@ -48,8 +48,8 @@
 ---
 
 ## Session Completion
-**Session integration check:** [ ] PASSED
-**All tasks verified:** [ ] Yes
+**Session integration check:** [x] PASSED
+**All tasks verified:** [x] Yes
 **PR raised:** [ ] Yes — PR #: `session/5-m2m-flow` → main
-**Status updated to:** 
-**Engineer sign-off:** 
+**Status updated to:** Done
+**Engineer sign-off:** SandeepPolsani
