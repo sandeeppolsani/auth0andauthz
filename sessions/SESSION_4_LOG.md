@@ -13,7 +13,7 @@
 
 | Task Id | Task Name | Status | Commit |
 |---------|-----------|--------|--------|
-| 4.1 | Okta Auth Configuration and Router | Done | TBD |
+| 4.1 | Okta Auth Configuration and Router | Done | 721a50a |
 | 4.2 | Login Page and Dashboard | | |
 | 4.3 | Token Inspector Panel | | |
 | 4.4 | API Tester Panel | | |
@@ -36,7 +36,7 @@
 
 | Task | Deviation observed | Action taken |
 |------|--------------------|--------------|
-|      |                    |              |
+| 4.1 | `SecureRoute` from `@okta/okta-react` v6.11 throws at runtime with react-router-dom v7 — it uses `useRouteMatch` (v5-only API), missing in v7 | Replaced import with custom `SecureRoute` in App.jsx using `useOktaAuth` + `useEffect` + `auth.signInWithRedirect()`. Spec intent (protected route, INV-28 state validation via SDK) preserved. |
 
 ---
 

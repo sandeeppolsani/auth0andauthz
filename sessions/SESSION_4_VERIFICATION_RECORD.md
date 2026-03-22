@@ -15,7 +15,7 @@ Source: EXECUTION_PLAN.md Session 4
 |------|----------|----------|--------|
 | TC-1 | App compiles without errors | `npm run build` exits 0 | PASS — vite build: 273 modules, exit 0, 3.97s |
 | TC-2 | / renders LoginPage | Root route serves LoginPage component | PASS — code inspection: `<Route path="/" element={<LoginPage />} />` in App.jsx |
-| TC-3 | /dashboard redirects to Okta | Unauthenticated visit to /dashboard triggers Okta redirect | PENDING — runtime test requires real .env values |
+| TC-3 | /dashboard redirects to Okta | Unauthenticated visit to /dashboard triggers Okta redirect | PASS — verified in incognito; Okta login page shown on unauthenticated /dashboard visit |
 | TC-4 | No credential literals in source | `grep -r "dev-" src/` returns nothing | PASS — all values via `import.meta.env.VITE_*`; no literals in any src file |
 | TC-5 | pkce: true is set | Code inspection shows pkce flag in oktaConfig | PASS — `pkce: true` confirmed in oktaConfig.js line 6 |
 | TC-6 | /login/callback is NOT inside SecureRoute | Callback route is public — unauthenticated users must reach it to complete PKCE exchange | PASS — `<Route path="/login/callback" element={<LoginCallback />} />` unwrapped at App.jsx line 25 |
@@ -46,12 +46,12 @@ Out of scope additions: None — all three files created are within the spec exa
 - Placeholder components defined inline in App.jsx — per spec ("use placeholder components that render a single div with the route name"). Will be extracted in Task 4.2.
 
 ### Verification Verdict
-[ ] All planned cases passed
+[x] All planned cases passed
 [x] CC challenge reviewed
 [x] Code review complete (if invariant-touching)
 [x] Scope decisions documented
 
-**Status:** TC-1, TC-2, TC-4, TC-5, TC-6, TC-7, TC-8 PASS. TC-3 pending runtime test with real Okta credentials.
+**Status:** All 8 cases PASS (TC-1 through TC-8).
 
 ---
 
