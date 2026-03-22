@@ -13,11 +13,11 @@
 
 | Task Id | Task Name | Status | Commit |
 |---------|-----------|--------|--------|
-| 2.1 | Mock Database (API A) | Done | |
-| 2.2 | JWKS Cache (API A) | Done | |
-| 2.3 | JWT Auth Middleware (API A) | Done | |
-| 2.4 | User Route Handlers (API A) | Done | |
-| 2.5 | API A Startup Verification | | |
+| 2.1 | Mock Database (API A) | Done | `75ebab9` |
+| 2.2 | JWKS Cache (API A) | Done | `4bc2ff5` |
+| 2.3 | JWT Auth Middleware (API A) | Done | `a1bec40` |
+| 2.4 | User Route Handlers (API A) | Done | `ecb368a` |
+| 2.5 | API A Startup Verification | Done | TBD |
 
 ---
 
@@ -35,6 +35,9 @@
 | 2.4 | Auth dependencies tested via FastAPI dependency_overrides | Injecting controlled claims avoids re-testing JWT/JWKS logic already covered in Tasks 2.2–2.3. Full expired-token path covered by Task 2.3 TC-3. |
 | 2.4 | POST /api/users returns 409 on duplicate email | ValueError from mock_db.create_user() is mapped to 409 Conflict — clearer semantics than 400 for a duplicate-key condition. |
 | 2.4 | Global exception handler path not triggered in route tests | Would require a test-only route or monkeypatching production code. Handler registration and correct response shape confirmed by code review. |
+| 2.5 | README Python version corrected to 3.14+ | Original draft said 3.11+ — Fixed Stack in CLAUDE.md specifies 3.14+. Corrected on CC challenge review. |
+| 2.5 | run.sh line endings verified LF via cat -A | git autocrlf risk checked; file confirmed clean. |
+| 2.5 | Okta access policy rule required Client Credentials grant type to be enabled | Policy was scoped to all apps but rule only had Authorization Code. Added Client Credentials + scopes to rule. No code change. |
 
 ---
 
@@ -42,7 +45,7 @@
 
 | Task | Deviation observed | Action taken |
 |------|--------------------|--------------|
-|      |                    |              |
+| 2.5 | Spec uses `.venv/bin/python` in run.sh; Windows uses `.venv/Scripts/python` | run.sh written with `.venv/Scripts/python`. README documents both paths. No invariant impact. |
 
 ---
 
@@ -55,8 +58,8 @@
 ---
 
 ## Session Completion
-**Session integration check:** [ ] PASSED
-**All tasks verified:** [ ] Yes
+**Session integration check:** [x] PASSED
+**All tasks verified:** [x] Yes
 **PR raised:** [ ] Yes — PR #: `session/2-api-a-core-auth` → main
-**Status updated to:** 
-**Engineer sign-off:** 
+**Status updated to:** Done
+**Engineer sign-off:**

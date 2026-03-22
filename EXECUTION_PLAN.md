@@ -633,7 +633,7 @@ kill %1
 In api-a/, create a startup script run.sh:
   #!/bin/bash
   set -a && source .env && set +a
-  .venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 3001 --reload
+  .venv/Scripts/python -m uvicorn app.main:app --host 0.0.0.0 --port 3001 --reload
 
 Make it executable (chmod +x run.sh).
 
