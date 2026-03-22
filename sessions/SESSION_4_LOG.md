@@ -17,7 +17,7 @@
 | 4.2 | Login Page and Dashboard | Done | adb01ed |
 | 4.3 | Token Inspector Panel | Done | f2e3e75 |
 | 4.4 | API Tester Panel | Done | 6877707 |
-| 4.5 | Token Refresh Demo Panel | Done | TBD |
+| 4.5 | Token Refresh Demo Panel | Done | e371ed5 |
 | 4.6 | Proactive Silent Refresh Timer | | |
 
 ---

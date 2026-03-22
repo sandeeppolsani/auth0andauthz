@@ -247,7 +247,7 @@ Source: EXECUTION_PLAN.md Session 4
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
 | TC-1 | Before state captured correctly | beforeToken shows current token exp before refresh | PASS — code inspection: `setBeforeToken(accessToken)` at line 52, before `renew()` at line 56 |
-| TC-2 | After state shows new token | afterToken exp > beforeToken exp (new token issued) | PENDING — runtime |
+| TC-2 | After state shows new token | afterToken exp > beforeToken exp (new token issued) | PASS — verified at runtime; After panel shows later exp with green diff message |
 | TC-3 | Both panels visible simultaneously | Before and after rendered at same time after refresh completes | PASS — code inspection: `beforeToken` is only set once (line 52); no call to `setBeforeToken(null)` anywhere in the success path |
 | TC-4 | Refresh failure redirects to login | oktaAuth error → redirect to / | PASS — code inspection: catch block calls `signOut().then(() => navigate('/', { replace: true }))` at line 64 |
 | TC-5 | TokenContext updated | After refresh, subsequent API calls use new token | PASS — code inspection: `setAccessToken(newToken)` at line 59 updates TokenContext on success |
@@ -281,12 +281,12 @@ On a second button click, `setBeforeToken(accessToken)` runs again with the curr
 - `decodeExp` defined locally rather than imported from a shared util — avoids creating a shared module (CLAUDE.md prohibits shared packages/). The function is 6 lines and used only in this component.
 
 ### Verification Verdict
-[ ] All planned cases passed (TC-2 pending runtime)
+[x] All planned cases passed
 [x] CC challenge reviewed
 [x] Code review complete (if invariant-touching)
 [x] Scope decisions documented
 
-**Status:** TC-1, TC-3, TC-4, TC-5, TC-6 PASS. TC-2 pending runtime verification.
+**Status:** All 6 cases PASS (TC-1 through TC-6).
 
 ---
 
