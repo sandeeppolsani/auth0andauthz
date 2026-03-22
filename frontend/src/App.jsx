@@ -3,6 +3,9 @@ import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { Security, LoginCallback, useOktaAuth } from '@okta/okta-react';
 import { toRelativeUrl } from '@okta/okta-auth-js';
 import { oktaAuth } from './config/oktaConfig';
+import { TokenProvider } from './context/TokenContext';
+import LoginPage from './pages/LoginPage';
+import Dashboard from './pages/Dashboard';
 
 // SecureRoute from @okta/okta-react v6 uses useRouteMatch (react-router-dom v5 API).
 // Custom implementation using useOktaAuth + useEffect for v6/v7 compatibility.
@@ -23,14 +26,6 @@ function SecureRoute({ children }) {
   }
 
   return children;
-}
-
-function LoginPage() {
-  return <div>Login Page</div>;
-}
-
-function Dashboard() {
-  return <div>Dashboard</div>;
 }
 
 function AppRoutes() {
@@ -60,8 +55,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <TokenProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </TokenProvider>
   );
 }
