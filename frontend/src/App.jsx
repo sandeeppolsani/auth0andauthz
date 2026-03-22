@@ -1,7 +1,29 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { Security, LoginCallback, SecureRoute } from '@okta/okta-react';
+import { Security, LoginCallback, useOktaAuth } from '@okta/okta-react';
 import { toRelativeUrl } from '@okta/okta-auth-js';
 import { oktaAuth } from './config/oktaConfig';
+
+// SecureRoute from @okta/okta-react v6 uses useRouteMatch (react-router-dom v5 API).
+// Custom implementation using useOktaAuth + useEffect for v6/v7 compatibility.
+function SecureRoute({ children }) {
+  const { oktaAuth: auth, authState } = useOktaAuth();
+
+  useEffect(() => {
+    if (!authState) return;
+    if (!authState.isAuthenticated) {
+      const originalUri = toRelativeUrl(window.location.href, window.location.origin);
+      auth.setOriginalUri(originalUri);
+      auth.signInWithRedirect();
+    }
+  }, [authState, auth]);
+
+  if (!authState || !authState.isAuthenticated) {
+    return null;
+  }
+
+  return children;
+}
 
 function LoginPage() {
   return <div>Login Page</div>;
