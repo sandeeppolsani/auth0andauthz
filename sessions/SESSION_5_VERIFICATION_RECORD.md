@@ -114,41 +114,45 @@ Source: EXECUTION_PLAN.md Session 5
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | Full M2M chain succeeds | GET /api/internal/pull-analytics returns analytics data | |
-| TC-2 | API B audit_log populated by M2M call | GET /api/audit-log shows entry with subject from M2M token sub | |
-| TC-3 | M2M token has api-b:read scope | Decoded M2M token scp claim contains api-b:read | |
-| TC-4 | M2M call to api-b:admin endpoint | 403 returned (M2M token lacks admin scope) | |
-| TC-5 | Client secret not in API A response body | curl response from /api/internal/pull-analytics contains no secret value | |
+| TC-1 | Full M2M chain succeeds | GET /api/internal/pull-analytics returns analytics data | PASS — verified at runtime; `{"source": "api-b", "data": {...}}` returned |
+| TC-2 | API B audit_log populated by M2M call | GET /api/audit-log shows entry with subject from M2M token sub | PASS — verified via API Tester Panel (admin@example.com); audit log entry present with M2M token sub |
+| TC-3 | M2M token has api-b:read scope | Decoded M2M token scp claim contains api-b:read | PASS — verified via Python decode snippet; `scp` contains `api-b:read` only |
+| TC-4 | M2M call to api-b:admin endpoint | 403 returned (M2M token lacks admin scope) | PASS — curl to /api/config with M2M token returned 403 `insufficient_scope` |
+| TC-5 | Client secret not in API A response body | curl response from /api/internal/pull-analytics contains no secret value | PASS — grep returned no output; no credential values in response |
 
 ### Prediction Statement
 <!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason).
-Note: Task 5.3 is primarily a verification task. If no CC prompt was needed (no gaps
-found in 5.1 or 5.2), the CC Challenge here covers the end-to-end verification
-commands themselves — ask CC: 'What did you not test in this end-to-end verification?' -->
+**TC-6 — M2M token `iss` and `aud` claims validated by API B (accepted)**
+TC-3 confirmed `scp` contains `api-b:read`, but the JWKS middleware in API B also validates `iss` and `aud`. Since API A and API B share the same Okta custom auth server and audience (`api://okta-lab`), the M2M token passes these checks identically to a user token. Confirmed indirectly by TC-1 succeeding (a 401 would have been returned if `iss`/`aud` failed). No new test case; covered by TC-1.
+
+**TC-7 — M2M call with expired token returns 401 from API B (rejected)**
+Expiring an M2M token mid-flow would require waiting 1 hour or manually altering the token. Not feasible in this verification session. The JWKS middleware `leeway=60` and expiry check are already verified in Sessions 2 and 3 for user tokens; the same code path applies for M2M tokens (INV-18). No new test case.
+
+**TC-8 — audit log entry written even when M2M token is rejected (e.g. wrong scope) (accepted)**
+INV-15 states the audit log write occurs in middleware, not route handlers — meaning it fires on both pass and fail. TC-4 (403 on admin endpoint) verified the 403 response but we didn't explicitly check the audit log for the failed entry. Confirmed as out of scope for this session: the audit middleware was verified in Session 3; INV-15 is unchanged.
 
 ### Code Review
 **Invariants touched:** INV-17, INV-18, INV-19
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-18 | API B's JWKS middleware processes the M2M token identically to a user token — confirmed by checking API B logs for `JWKS_CACHE_HIT` or `JWKS_CACHE_REFRESHED` on the M2M call | API B stdout logs during TC-1 | |
-| INV-19 | Full response body from `/api/internal/pull-analytics` contains no credential values — TC-5 confirms this at runtime | curl output — manual scan | |
-| INV-17 | Decoded M2M token `scp` claim contains `api-b:read` and nothing else — scope is narrowly granted | TC-3 — base64url decode the token payload and inspect `scp` | |
+| INV-18 | API B's JWKS middleware processes the M2M token identically to a user token — confirmed by API B logs showing `JWKS_CACHE_HIT` or `JWKS_CACHE_REFRESHED` on the M2M call | API B stdout during TC-1 | PASS — API B JWKS logs appeared on M2M call; no special handling path |
+| INV-19 | Full response body from `/api/internal/pull-analytics` contains no credential values | TC-5 curl + grep | PASS — grep returned no output |
+| INV-17 | Decoded M2M token `scp` claim contains `api-b:read` — scope explicitly requested and granted | TC-3 Python decode | PASS — `scp: ['api-b:read']` confirmed |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+- No CC fix prompt was needed — Tasks 5.1 and 5.2 had no gaps found during end-to-end verification. All 5 TCs passed on first run.
+- TC-2 audit log checked via frontend API Tester Panel (admin@example.com) rather than raw curl — equivalent result; panel uses the same `Authorization: Bearer` header.
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
-**Status:**
+**Status:** All 5 cases PASS. No fixes required.
 
 ---
 
@@ -171,7 +175,6 @@ kill %1 %2
 **Prediction:**
 <!-- LEAVE BLANK — engineer writes prediction before running -->
 
-**Result:**
-<!-- LEAVE BLANK -->
+**Result:** `{"source": "api-b", "data": {...}}` returned. API B JWKS logs confirmed on M2M call. Audit log populated. M2M token `scp` = `api-b:read` only. 403 on admin endpoint. No secret in response.
 
-**Verdict:** [ ] PASSED
+**Verdict:** [x] PASSED
