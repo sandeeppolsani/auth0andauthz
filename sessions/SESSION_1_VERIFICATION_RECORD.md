@@ -30,8 +30,8 @@ For each item: accepted (added case) / rejected (reason). -->
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-22 | `.env` appears in `.gitignore` before any Okta values are written | `okta-identity-lab/.gitignore` | |
-| INV-22 | No credential string literals in any `.py` file | All `.py` files in scaffold | |
+| INV-22 | `.env` appears in `.gitignore` before any Okta values are written | `okta-identity-lab/.gitignore` | PASS - .env is added .gitignore |
+| INV-22 | No credential string literals in any `.py` file | All `.py` files in scaffold | PASS - scanned all .py files there are no credentails hardcoded |
 
 ### Scope Decisions
 <!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
@@ -122,7 +122,7 @@ With this task CC initiates frontent and install all the required dependencies f
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-22 | No Okta credential values in any file at this stage | `frontend/` directory | |
+| INV-22 | No Okta credential values in any file at this stage | `frontend/` directory | PASS - No Okta credentials in frontend/ directory|
 
 ### Scope Decisions
   ---                                                                                                              1. package-lock.json created
@@ -242,39 +242,46 @@ Source: EXECUTION_PLAN.md Session 1
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | JWKS endpoint accessible | `curl https://<OKTA_DOMAIN>/oauth2/<AUTH_SERVER_ID>/v1/keys` returns JSON with `keys` array | |
-| TC-2 | SPA app redirect URIs match | Okta app settings show both `http://localhost:3000` and `http://localhost:3000/login/callback` | |
-| TC-3 | Both test users exist | Admin console shows alice and admin users with group assignments | |
-| TC-4 | .env files not committed | `git status` shows .env files as untracked (in .gitignore) | |
+| TC-1 | JWKS endpoint accessible | `curl https://<OKTA_DOMAIN>/oauth2/<AUTH_SERVER_ID>/v1/keys` returns JSON with `keys` array | PASS — `kid: sW_nZs6RX5fr0KdAZVXwTNbNI0TObILQbdYAjQRkJn8` returned |
+| TC-2 | SPA app redirect URIs match | Okta app settings show both `http://localhost:3000` and `http://localhost:3000/login/callback` | PASS — verified in Okta admin console |
+| TC-3 | Both test users exist | Admin console shows alice and admin users with group assignments | PASS — alice@example.com and admin@example.com created with correct group memberships |
+| TC-4 | .env files not committed | `git status` shows .env files as untracked (in .gitignore) | PASS — .env files not tracked |
 
 ### Prediction Statement
-<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+Okta custom AuthServer should be live with all scopes and claims configured. JWKS endpoint should return at least one key. Both test users should exist with correct group assignments. .env files must not appear in git.
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason).
-Note: Task 1.4 is manual/engineer-executed. CC Challenge should be applied to any
-scripted verification steps the engineer uses to confirm the Okta setup. -->
+Task 1.4 is manual/engineer-executed — no CC scripted steps to challenge. Engineer verified all 4 TCs directly in the Okta admin console and via curl. Not applicable.
 
 ### Code Review
 **Invariants touched:** INV-22 (env vars, never hardcoded), INV-19 (client secret in env only)
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-22 | `.env` files do not appear in `git status` tracked files | `git status` output | |
-| INV-22 | No credential literals in any `.py`, `.js`, `.jsx`, or `.ts` file | Full repo scan | |
-| INV-19 | `OKTA_CLIENT_SECRET` present in `api-a/.env` only — not in any source file | `api-a/` directory | |
+| INV-22 | `.env` files do not appear in `git status` tracked files | `git status` output | PASS — .env untracked, covered by .gitignore |
+| INV-22 | No credential literals in any `.py`, `.js`, `.jsx`, or `.ts` file | Full repo scan | PASS — no source files changed since Task 1.1 scan |
+| INV-19 | `OKTA_CLIENT_SECRET` present in `api-a/.env` only — not in any source file | `api-a/` directory | PASS — engineer confirmed, secret in .env only |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+  1. CRLF line endings in .env files
+  Standard `source api-a/.env` fails silently on this Windows machine due to CRLF line endings.
+  Accepted — platform issue only. Workaround: `source <(tr -d '\r' < api-a/.env)`. No impact on
+  runtime behaviour since FastAPI loads .env via python-dotenv which handles CRLF correctly.
+
+  ---
+  2. Task is entirely manual — no CC execution
+  All Okta setup steps (app registration, AuthServer config, scopes, claims, groups, users) were
+  performed by the engineer in the Okta admin console. CC was not involved in execution.
+  Accepted — explicitly stated in EXECUTION_PLAN.md: "This task is executed by the engineer."
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
 **Status:**
+Done
 
 ---
 
@@ -291,9 +298,9 @@ ls frontend/node_modules/@okta
 ```
 
 **Prediction:**
-<!-- LEAVE BLANK — engineer writes prediction before running -->
+The systems should be able to talk to Okta, each environment should be isolated and have all the necessary packages installed
 
 **Result:**
-<!-- LEAVE BLANK -->
+Session 1 Integration testing is done and it is working as expected
 
-**Verdict:** [ ] PASSED
+**Verdict:** [*] PASSED
