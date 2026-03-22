@@ -16,7 +16,7 @@
 | 3.1 | Mock Database (API B) | Done | `ecf4000` |
 | 3.2 | JWKS Cache + JWT Auth Middleware (API B) | Done | `f06ebcb` + `2aaae68` |
 | 3.3 | API B Route Handlers | Done | `46bc611` |
-| 3.4 | API B Startup Script | | |
+| 3.4 | API B Startup Script | Done | pending commit |
 
 ---
 
@@ -35,6 +35,8 @@
 | 3.3 | `_scope` parameter name used for the first `Depends()` on dual-gated routes | The scope dep return value is unused by the route handler — `_` prefix signals this clearly without discarding the FastAPI dependency execution. |
 | 3.3 | `health` route placed in `analytics.py` router | Avoids a fourth router file for a single no-auth route. Health is conceptually a system status check that lives alongside the analytics data layer. |
 | 3.3 | Global exception handler path not directly triggered in route tests | Requires overriding `verify_token` with a raiser. Handler registration and correct response shape confirmed by TC-14. |
+| 3.4 | `run.sh` uses `.venv/Scripts/python` (Windows path) | Spec says `.venv/bin/python`. Same deviation as Task 2.5. README documents both paths. No invariant impact. |
+| 3.4 | `api-b/.env.example` created (CC challenge add) | README references it; scope boundary permits it; API A has one. Four vars only: OKTA_DOMAIN, OKTA_ISSUER, OKTA_JWKS_URI, OKTA_AUDIENCE. No client secret — API B has no M2M credentials. |
 
 ---
 
@@ -42,7 +44,7 @@
 
 | Task | Deviation observed | Action taken |
 |------|--------------------|--------------|
-|      |                    |              |
+| 3.4 | Spec uses `.venv/bin/python` in run.sh; Windows uses `.venv/Scripts/python` | run.sh written with `.venv/Scripts/python`. README documents both paths. No invariant impact. |
 
 ---
 
