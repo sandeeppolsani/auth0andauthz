@@ -13,37 +13,58 @@ Source: EXECUTION_PLAN.md Session 3
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | get_analytics returns seed | Dict with total_users=42 | |
-| TC-2 | get_config returns seed | maintenance_mode=False | |
-| TC-3 | update_config patches correctly | Updated key reflected in subsequent get_config | |
-| TC-4 | append_audit_entry + get_audit_log | Entry appears in log | |
-| TC-5 | audit_log starts empty | get_audit_log() returns [] on fresh import | |
+| TC-1 | get_analytics returns seed | Dict with total_users=42 | PASS |
+| TC-2 | get_analytics returns copy (mutating returned dict doesn't change stored value) | Stored total_users still 42 after mutation | PASS |
+| TC-3 | get_config returns seed | maintenance_mode=False, log_level=INFO, feature_flags correct | PASS |
+| TC-4 | get_config returns copy | Stored log_level unchanged after mutation of returned dict | PASS |
+| TC-5 | update_config patches a key | log_level becomes DEBUG | PASS |
+| TC-6 | update_config leaves unrelated keys unchanged | maintenance_mode, feature_flags untouched | PASS |
+| TC-7 | update_config adds a new key | New key appears in subsequent get_config | PASS |
+| TC-8 | update_config returns updated state | Returned dict reflects the change | PASS |
+| TC-9 | update_config return is a copy | Mutating returned dict doesn't change stored value | PASS |
+| TC-10 | append_audit_entry + get_audit_log | Entry appears in log | PASS |
+| TC-11 | Multiple entries are ordered (FIFO) | First entry has earlier timestamp | PASS |
+| TC-12 | get_audit_log returns list copy | Appending to returned list doesn't change internal log | PASS |
+| TC-13 | audit_log starts empty | get_audit_log() returns [] after reset | PASS |
+| TC-14 | update_config with empty dict is no-op | Config unchanged | PASS (CC add) |
+| TC-15 | update_config with nested dict replaces sub-dict wholesale | feature_flags replaced entirely | PASS (CC add) |
+| TC-16 | No fastapi or jose imports in mock_db.py | AST scan finds no forbidden imports | PASS |
 
 ### Prediction Statement
 <!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
 
 ### CC Challenge Output
-<!-- Paste CC's response to: 'What did you not test in this task?'
-For each item: accepted (added case) / rejected (reason). -->
+
+| Item raised | Decision |
+|-------------|----------|
+| `update_config({})` empty dict is no-op | Accepted — TC-14 added |
+| `update_config` with nested dict replaces not merges | Accepted — TC-15 added (documents `dict.update()` wholesale replacement behaviour) |
+| `get_audit_log` entry-dict mutation not guarded | Rejected — `list(_audit_log)` gives list-level copy. No caller in this codebase mutates individual entry dicts. |
+| `append_audit_entry` with partial entry (missing required field) | Rejected — passive receiver; schema validation is auth middleware's responsibility (Task 3.2). |
+| `get_analytics` not mutated by any public function | Rejected — no public function modifies `_analytics`; copy test (TC-2) already guards this. |
 
 ### Code Review
 **Invariants touched:** INV-15 (audit log write path)
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
-| INV-15 | `append_audit_entry` is called by auth middleware (Task 3.2) — NOT by route handlers | `api-b/app/db/mock_db.py` — confirm no audit write logic exists here; the function is a passive receiver only | |
-| INV-15 | `append_audit_entry` entry schema accepts: timestamp, subject, route, outcome — all four fields | `mock_db.py` — docstring and append logic | |
+| INV-15 | `append_audit_entry` is called by auth middleware (Task 3.2) — NOT by route handlers | `api-b/app/db/mock_db.py` — confirm no audit write logic exists here; the function is a passive receiver only | PASS — function only calls `_audit_log.append(entry)`, no other logic |
+| INV-15 | `append_audit_entry` entry schema accepts: timestamp, subject, route, outcome — all four fields | `mock_db.py` — docstring and append logic | PASS — docstring states all four required fields; no schema enforcement (by design) |
 
 ### Scope Decisions
-<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+
+| Item | Accepted as out of scope | Reason |
+|------|--------------------------|--------|
+| Entry-level dict mutation guard on `get_audit_log` | Out of scope | Contract is list-level copy only. No caller in this codebase mutates audit entries after retrieval. Deep copying every entry would be over-engineering for a mock. |
+| Input validation inside `append_audit_entry` | Out of scope | Passive receiver pattern. The auth middleware (Task 3.2) owns entry construction and correctness. |
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
-**Status:**
+**Status:** PASSED
 
 ---
 
