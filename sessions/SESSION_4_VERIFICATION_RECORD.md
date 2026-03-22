@@ -1,0 +1,291 @@
+# VERIFICATION_RECORD.md
+
+**Session:** Session 4 — Frontend SPA
+**Date:** 22/03/2026
+**Engineer:** Sandeep
+
+---
+
+## Task 4.1 — Okta Auth Configuration and Router
+
+### Test Cases Applied
+Source: EXECUTION_PLAN.md Session 4
+
+| Case | Scenario | Expected | Result |
+|------|----------|----------|--------|
+| TC-1 | App compiles without errors | `npm run build` exits 0 | |
+| TC-2 | / renders LoginPage | Root route serves LoginPage component | |
+| TC-3 | /dashboard redirects to Okta | Unauthenticated visit to /dashboard triggers Okta redirect | |
+| TC-4 | No credential literals in source | `grep -r "dev-" src/` returns nothing | |
+| TC-5 | pkce: true is set | Code inspection shows pkce flag in oktaConfig | |
+
+### Prediction Statement
+<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+
+### CC Challenge Output
+<!-- Paste CC's response to: 'What did you not test in this task?'
+For each item: accepted (added case) / rejected (reason). -->
+
+### Code Review
+**Invariants touched:** INV-01, INV-02, INV-22, INV-28
+
+| Item | What to look for | Where | Result |
+|------|-----------------|-------|--------|
+| INV-01 | `pkce: true` present in OktaAuth config — not absent, not false | `frontend/src/config/oktaConfig.js` | |
+| INV-02 | No `localStorage.setItem` anywhere in `src/` at this stage | Full `src/` directory scan | |
+| INV-22 | No Okta credential string literals in any `.js`, `.jsx`, or `.ts` file — all values via `import.meta.env` | `frontend/src/config/oktaConfig.js` and all other src files | |
+| INV-28 | No `ignoreSignature`, `ignoreExpiry`, or equivalent SDK bypass flags set in OktaAuth config | `frontend/src/config/oktaConfig.js` — full config object | |
+| INV-28 | `<LoginCallback />` from `@okta/okta-react` used for `/login/callback` route — not a custom handler that could skip state validation | `frontend/src/App.jsx` — callback route definition | |
+
+### Scope Decisions
+<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+
+### Verification Verdict
+[ ] All planned cases passed
+[ ] CC challenge reviewed
+[ ] Code review complete (if invariant-touching)
+[ ] Scope decisions documented
+
+**Status:**
+
+---
+
+## Task 4.2 — Login Page and Dashboard
+
+### Test Cases Applied
+Source: EXECUTION_PLAN.md Session 4
+
+| Case | Scenario | Expected | Result |
+|------|----------|----------|--------|
+| TC-1 | LoginPage renders button | "Login with Okta" button visible | |
+| TC-2 | After login, Dashboard shows user name and email | Values from ID token claims | |
+| TC-3 | Access token in TokenContext (memory) | TokenContext has non-null accessToken after login | |
+| TC-4 | Page refresh — token restored | After refresh, accessToken is restored to memory via SDK silent path | |
+| TC-5 | No localStorage write for access token | DevTools Application → LocalStorage: no token entries | |
+
+### Prediction Statement
+<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+
+### CC Challenge Output
+<!-- Paste CC's response to: 'What did you not test in this task?'
+For each item: accepted (added case) / rejected (reason). -->
+
+### Code Review
+**Invariants touched:** INV-02, INV-03, INV-04, INV-06
+
+| Item | What to look for | Where | Result |
+|------|-----------------|-------|--------|
+| INV-02 | `setAccessToken` is only called with the value from `oktaAuth.getAccessToken()` — not from any storage read | `frontend/src/pages/Dashboard.jsx` — setAccessToken call site | |
+| INV-02 | No `localStorage.setItem`, `document.cookie` write, or `sessionStorage.setItem` for access tokens in any component | All files under `frontend/src/` | |
+| INV-03 | Refresh token storage is delegated to the SDK's `tokenManager` with `storage: 'sessionStorage'` — not handled manually | `frontend/src/config/oktaConfig.js` — tokenManager config | |
+| INV-04 | Silent refresh attempt runs before the router renders any authenticated route — not after | `frontend/src/App.jsx` or equivalent initialisation path — order of operations | |
+| INV-06 | Refresh failure in the page-load restore path redirects to `/` — does not silently continue with no token | `frontend/src/pages/Dashboard.jsx` — error handler on `getAccessToken()` call | |
+
+### Scope Decisions
+<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+
+### Verification Verdict
+[ ] All planned cases passed
+[ ] CC challenge reviewed
+[ ] Code review complete (if invariant-touching)
+[ ] Scope decisions documented
+
+**Status:**
+
+---
+
+## Task 4.3 — Token Inspector Panel
+
+### Test Cases Applied
+Source: EXECUTION_PLAN.md Session 4
+
+| Case | Scenario | Expected | Result |
+|------|----------|----------|--------|
+| TC-1 | No token in context | "No access token" message rendered | |
+| TC-2 | Valid token — header section | alg and kid values displayed correctly | |
+| TC-3 | Valid token — payload section | All standard + custom claims visible | |
+| TC-4 | Expiry countdown | Updates every second, matches exp claim | |
+| TC-5 | Countdown <60s | Turns red | |
+| TC-6 | Raw segments visible | Three base64url strings displayed | |
+| TC-7 | No external JWT library used | `grep -r "jwt-decode\|jsonwebtoken" src/` returns nothing | |
+
+### Prediction Statement
+<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+
+### CC Challenge Output
+<!-- Paste CC's response to: 'What did you not test in this task?'
+For each item: accepted (added case) / rejected (reason). -->
+
+### Code Review
+**Invariants touched:** INV-25
+
+| Item | What to look for | Where | Result |
+|------|-----------------|-------|--------|
+| INV-25 | All required fields rendered: alg, kid (header); iss, sub, aud, exp, iat, scp, groups, department (payload); live countdown; raw base64url segments | `frontend/src/components/TokenInspector.jsx` — rendered JSX | |
+| INV-25 | Countdown timer uses `setInterval` and updates every 1000ms — not a static render of exp | `TokenInspector.jsx` — setInterval call | |
+| INV-25 | `clearInterval` called in `useEffect` cleanup function — timer does not leak on unmount | `TokenInspector.jsx` — useEffect return function | |
+| INV-25 | JWT decoding uses manual `atob()` on base64url segments — no external JWT decode library imported | `TokenInspector.jsx` — imports and decodeSegment implementation | |
+
+### Scope Decisions
+<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+
+### Verification Verdict
+[ ] All planned cases passed
+[ ] CC challenge reviewed
+[ ] Code review complete (if invariant-touching)
+[ ] Scope decisions documented
+
+**Status:**
+
+---
+
+## Task 4.4 — API Tester Panel
+
+### Test Cases Applied
+Source: EXECUTION_PLAN.md Session 4
+
+| Case | Scenario | Expected | Result |
+|------|----------|----------|--------|
+| TC-1 | All 8 buttons rendered | Count: 8 buttons present in DOM | |
+| TC-2 | No token — all buttons disabled | Buttons in disabled state, "Login required" message shown | |
+| TC-3 | GET /api/users with valid token | 200 green, user list displayed | |
+| TC-4 | GET /api/config with non-admin token | 403 amber displayed | |
+| TC-5 | Request with expired token | 401 red displayed | |
+| TC-6 | Full request visible | URL and truncated Bearer token shown above response | |
+
+### Prediction Statement
+<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+
+### CC Challenge Output
+<!-- Paste CC's response to: 'What did you not test in this task?'
+For each item: accepted (added case) / rejected (reason). -->
+
+### Code Review
+**Invariants touched:** INV-24, INV-27
+
+| Item | What to look for | Where | Result |
+|------|-----------------|-------|--------|
+| INV-24 | All 8 protected endpoints from Brief Sections 5.1 and 5.2 have corresponding buttons: `GET /api/users`, `GET /api/users/:id`, `POST /api/users`, `PUT /api/users/:id` (API A); `GET /api/analytics/summary`, `GET /api/config`, `POST /api/config`, `GET /api/audit-log` (API B) | `frontend/src/components/ApiTester.jsx` — button list | |
+| INV-27 | Status 200 renders with green treatment; 401 renders with red + "Unauthenticated" label; 403 renders with amber + "Forbidden" label — all three are visually distinct | `ApiTester.jsx` — status rendering logic and CSS classes | |
+| INV-27 | Raw response body always displayed below the status code — not hidden or collapsed by default | `ApiTester.jsx` — response display section | |
+| INV-02 | No `localStorage` usage for response storage — component state only | `ApiTester.jsx` — all state declarations | |
+
+### Scope Decisions
+<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+
+### Verification Verdict
+[ ] All planned cases passed
+[ ] CC challenge reviewed
+[ ] Code review complete (if invariant-touching)
+[ ] Scope decisions documented
+
+**Status:**
+
+---
+
+## Task 4.5 — Token Refresh Demo Panel
+
+### Test Cases Applied
+Source: EXECUTION_PLAN.md Session 4
+
+| Case | Scenario | Expected | Result |
+|------|----------|----------|--------|
+| TC-1 | Before state captured correctly | beforeToken shows current token exp before refresh | |
+| TC-2 | After state shows new token | afterToken exp > beforeToken exp (new token issued) | |
+| TC-3 | Both panels visible simultaneously | Before and after rendered at same time after refresh completes | |
+| TC-4 | Refresh failure redirects to login | oktaAuth error → redirect to / | |
+| TC-5 | TokenContext updated | After refresh, subsequent API calls use new token | |
+
+### Prediction Statement
+<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+
+### CC Challenge Output
+<!-- Paste CC's response to: 'What did you not test in this task?'
+For each item: accepted (added case) / rejected (reason). -->
+
+### Code Review
+**Invariants touched:** INV-06, INV-26
+
+| Item | What to look for | Where | Result |
+|------|-----------------|-------|--------|
+| INV-26 | `beforeToken` snapshot is taken BEFORE the `renew()` call — not after, not concurrently | `frontend/src/components/TokenRefreshDemo.jsx` — button onClick handler, order of operations | |
+| INV-26 | `beforeToken` is never set to null or overwritten after refresh succeeds — both panels remain visible simultaneously | `TokenRefreshDemo.jsx` — state transitions after renew() resolves | |
+| INV-06 | Refresh failure path calls redirect to `/` and clears TokenContext — does not silently continue | `TokenRefreshDemo.jsx` — catch/error handler on renew() | |
+
+### Scope Decisions
+<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+
+### Verification Verdict
+[ ] All planned cases passed
+[ ] CC challenge reviewed
+[ ] Code review complete (if invariant-touching)
+[ ] Scope decisions documented
+
+**Status:**
+
+---
+
+## Task 4.6 — Proactive Silent Refresh Timer
+
+### Test Cases Applied
+Source: EXECUTION_PLAN.md Session 4
+
+| Case | Scenario | Expected | Result |
+|------|----------|----------|--------|
+| TC-1 | Timer set after login | setTimeout called with positive delay | |
+| TC-2 | Timer fires at exp - 60s | Refresh triggered before expiry | |
+| TC-3 | Timer reset after refresh | New timer set based on new token exp, not original login exp | |
+| TC-4 | Refresh failure → redirect | User sent to login page | |
+| TC-5 | Timer cleared on unmount | clearTimeout called in useEffect cleanup | |
+
+### Prediction Statement
+<!-- LEAVE BLANK — engineer writes predictions before running verification commands -->
+
+### CC Challenge Output
+<!-- Paste CC's response to: 'What did you not test in this task?'
+For each item: accepted (added case) / rejected (reason). -->
+
+### Code Review
+**Invariants touched:** INV-05, INV-06
+
+| Item | What to look for | Where | Result |
+|------|-----------------|-------|--------|
+| INV-05 | Timer is rescheduled after each successful `renew()` — not set only once at login | `frontend/src/components/AuthManager.jsx` — timer reset inside renew() success path | |
+| INV-05 | Timer delay calculated as `(exp * 1000) - Date.now() - 60000` — fires 60s before expiry, not at expiry | `AuthManager.jsx` — setTimeout delay expression | |
+| INV-06 | Failure path in the timer's renew() call redirects to `/` and clears TokenContext — does not silently continue without a token | `AuthManager.jsx` — catch/error handler | |
+| INV-05 | `clearTimeout` called in `useEffect` cleanup on unmount AND on every accessToken change — previous timer cancelled before new one is set | `AuthManager.jsx` — useEffect return function and dependency array | |
+| **Mount point** | `<AuthManager />` is mounted inside `App.jsx` within the `<Security>` wrapper but outside any route — present for the full session lifetime | `frontend/src/App.jsx` — AuthManager placement | |
+
+### Scope Decisions
+<!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
+
+### Verification Verdict
+[ ] All planned cases passed
+[ ] CC challenge reviewed
+[ ] Code review complete (if invariant-touching)
+[ ] Scope decisions documented
+
+**Status:**
+
+---
+
+## Session Integration Check
+
+**Command:**
+```bash
+cd okta-identity-lab/frontend && npm run dev -- --port 3000 &
+sleep 3
+# Confirm app serves at root
+curl -s http://localhost:3000 | grep -i "root\|vite\|react"
+# Confirm no localStorage writes for access tokens (static analysis)
+grep -r "localStorage.setItem" src/ && echo "INV-02 VIOLATION" || echo "INV-02 PASS"
+kill %1
+```
+
+**Prediction:**
+<!-- LEAVE BLANK — engineer writes prediction before running -->
+
+**Result:**
+<!-- LEAVE BLANK -->
+
+**Verdict:** [ ] PASSED
