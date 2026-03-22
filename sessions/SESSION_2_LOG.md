@@ -15,7 +15,7 @@
 |---------|-----------|--------|--------|
 | 2.1 | Mock Database (API A) | Done | |
 | 2.2 | JWKS Cache (API A) | Done | |
-| 2.3 | JWT Auth Middleware (API A) | | |
+| 2.3 | JWT Auth Middleware (API A) | Done | |
 | 2.4 | User Route Handlers (API A) | | |
 | 2.5 | API A Startup Verification | | |
 
@@ -30,6 +30,8 @@
 | 2.1 | `update_user()` silently strips `email` from updates | Prevents corrupting the primary lookup key. Silent strip preferred over raising an error — route handlers should never send email in updates. |
 | 2.2 | Tests use mocked `httpx.get` | Real Okta JWKS endpoint not called in unit tests — avoids network dependency. Real fetch verified in Task 2.5. |
 | 2.2 | `invalidate_and_refetch` integration deferred to Task 2.3 | JWKSCache provides the method; the kid-mismatch wiring belongs in the auth middleware. |
+| 2.3 | `HTTPBearer(auto_error=False)` used | Default `auto_error=True` would raise 403 on missing header. `auto_error=False` lets verify_token handle it and return 401 per INV-16. |
+| 2.3 | Clock skew test uses kwarg assertion not a real expired token | Constructing a real signed JWT requires a private key — out of scope for unit tests. leeway=60 verified via mock call_args. |
 
 ---
 
