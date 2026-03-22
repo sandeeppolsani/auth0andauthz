@@ -13,10 +13,10 @@
 
 | Task Id | Task Name | Status | Commit |
 |---------|-----------|--------|--------|
-| 1.1 | Repository Scaffold | | |
-| 1.2 | Frontend Vite Scaffold | | |
-| 1.3 | Python Virtual Environments | | |
-| 1.4 | Okta Configuration (Manual — Engineer-Executed) | | |
+| 1.1 | Repository Scaffold | InProgress |  |
+| 1.2 | Frontend Vite Scaffold | Pending | |
+| 1.3 | Python Virtual Environments | Pending | |
+| 1.4 | Okta Configuration (Manual — Engineer-Executed) | Pending | |
 
 ---
 

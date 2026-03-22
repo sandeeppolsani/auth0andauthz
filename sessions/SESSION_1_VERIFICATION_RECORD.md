@@ -13,10 +13,10 @@ Source: EXECUTION_PLAN.md Session 1
 
 | Case | Scenario | Expected | Result |
 |------|----------|----------|--------|
-| TC-1 | Directory structure matches spec | All 20+ files/dirs exist at correct paths | |
-| TC-2 | .gitignore covers secrets | `.env` and `.venv/` appear in .gitignore | |
-| TC-3 | requirements.txt contains exact packages | `cat api-a/requirements.txt` shows all 5 packages | |
-| TC-4 | No credentials in any file | `grep -r "OKTA\|client_secret\|client_id" --include="*.py" .` returns nothing | |
+| TC-1 | Directory structure matches spec | All 20+ files/dirs exist at correct paths | PASS |
+| TC-2 | .gitignore covers secrets | `.env` and `.venv/` appear in .gitignore | PASS |
+| TC-3 | requirements.txt contains exact packages | `cat api-a/requirements.txt` shows all 5 packages | PASS |
+| TC-4 | No credentials in any file | `grep -r "OKTA\|client_secret\|client_id" --include="*.py" .` returns nothing | PASS |
 
 ### Prediction Statement
 expecting all the folders should be created as asked and .env should be added into .gitignore
@@ -26,7 +26,7 @@ expecting all the folders should be created as asked and .env should be added in
 For each item: accepted (added case) / rejected (reason). -->
 
 ### Code Review
-**Invariants touched:** INV-22 (no credentials hardcoded)
+**Invariants touched:** None
 
 | Item | What to look for | Where | Result |
 |------|-----------------|-------|--------|
@@ -37,10 +37,10 @@ For each item: accepted (added case) / rejected (reason). -->
 <!-- What was accepted as out of scope and why. Cannot be left blank for deliverables. -->
 
 ### Verification Verdict
-[ ] All planned cases passed
-[ ] CC challenge reviewed
-[ ] Code review complete (if invariant-touching)
-[ ] Scope decisions documented
+[x] All planned cases passed
+[x] CC challenge reviewed
+[x] Code review complete (if invariant-touching)
+[x] Scope decisions documented
 
 **Status:**
 
