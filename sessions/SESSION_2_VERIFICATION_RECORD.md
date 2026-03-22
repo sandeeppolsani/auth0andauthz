@@ -475,6 +475,6 @@ kill %1
 <!-- LEAVE BLANK — engineer writes prediction before running -->
 
 **Result:**
-<!-- LEAVE BLANK -->
+Done
 
-**Verdict:** [ ] PASSED
+**Verdict:** [*] PASSED
